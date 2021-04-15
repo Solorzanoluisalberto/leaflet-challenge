@@ -25,10 +25,10 @@ function createFeatures(earthquakeData) {
         var lat = row.geometry.coordinates[1];
         var long = row.geometry.coordinates[0];
         
-
         console.log(mag);
         console.log(place);
         console.log(long);
+
         console.log(lat);
 
     });
