@@ -1,53 +1,153 @@
-﻿// Adding tile layer to the map
-// Create the tile layer that will be the background of our map
-var EarthquakeLayer = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
+﻿d3.selection.prototype.moveToFront = function() {
+    return this.each(function(){
+      this.parentNode.appendChild(this);
+    });
+  };
+// Adding tile layer to the map
+var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+    attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> � <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
+    tileSize: 512,
     maxZoom: 18,
-    id: "light-v10",
+    zoomOffset: -1,
+    id: "mapbox/streets-v11",
     accessToken: API_KEY
+    
 });
-
+/*
+// Create a map object
+var myMap = L.map("mapid", {
+    center: [39.113014, -105.358887],
+    zoom: 3
+});*/
 // Initialize all of the LayerGroups we'll be using
+var layers = {
+    Earthquake: new L.LayerGroup(),
+    Tectonic: new L.LayerGroup()
+};
 
 // Create the map with our layers
 var myMap = L.map("mapid", {
     center: [39.113014, -105.358887],
-    zoom: 3
+    zoom: 3,
+    layers: [
+        layers.Earthquake,
+        layers.Tectonic
+    ]
+});
+Earthquakes.addTo(myMap);
+
+var overlaysMaps = {
+    "Earthquake": layers.Earthquake,
+    "Tectonic": layers.Tectonic
+};
+// Create a control for our layers, add our overlay layers to it
+L.control.layers(null, overlaysMaps).addTo(myMap);
+
+
+// Create a legend to display information about our map
+var info = L.control({
+    position: "bottomright"
 });
 
-EarthquakeLayer.addTo(myMap);
+// When the layer control is added, insert a div with the class of "legend"
+// info.onAdd = function () {
+//     var div = L.DomUtil.create("div", "maplegend");
+//     return div;
+// };
+// Add the info legend to the map
+//info.addTo(myMap);
 
-console.log("haz algo")
+console.log("añadi layer");
+var polygon = L.polygon([
+    [51.509, -0.08],
+    [51.503, -0.06],
+    [51.51, -0.047]
+]);
+polygon.addTo(layers.Tectonic);
+// read architectural plates data
+/*d3.json("../GeoJSON/plates.json").then(function (response) {
+    plates_obtained = response;
+    console.log("placas");*/
+var URL_json_obtained = "";
+//var URL_json = "http://localhost:8000/static/GeoJSON/plates.json";
+var URL_json = "/static/GeoJSON/plates.json";
+
+/*d3.json(URL_json, function (data) {
+    console.log(data.features);
+});*/
+// d3.json(URL_json).then(function (response) {
+//     URL_json_obtained = response;
+//     console.log(URL_json_obtained.features[0].geometry.coordinates);
+//     var polygon = L.polygon(URL_json_obtained.features[0].geometry.coordinates);
+//     polygon.addTo(layers.Tectonic);
+
+// });
+
+
+    //var json = require('./data.json'); //(with path)
+    
+    //createFeatures(URL_obtained.features, Depth_selected)
+    //legend() // initial legend
+    //any other functions that depend on data
+//});
+
+// Initialize an object containing icons for each layer group
+/*var icons = {
+    Earthquake: L.ExtraMarkers.icon({
+        icon: "ion-settings",
+        iconColor: "white",
+        markerColor: "yellow",
+        shape: "star"
+    }),
+    Tectonic: L.ExtraMarkers.icon({
+        icon: "ion-android-bicycle",
+        iconColor: "white",
+        markerColor: "red",
+        shape: "circle"
+    })
+};*/
+var URL_obtained1 = {"type": "FeatureCollection", "metadata": { "generated": 1618446829000, "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2015-01-02", "title": "USGS Earthquakes", "status": 200, "api": "1.10.3", "count": 368 }, "features": [{ "type": "Feature", "properties": { "mag": 2.51, "place": "15km E of Little Lake, CA", "time": 1420156541830, "updated": 1457757227609, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci37300904", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ci37300904&format=geojson", "felt": 2, "cdi": 2.2, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 97, "net": "ci", "code": "37300904", "ids": ",ci37300904,", "sources": ",ci,", "types": ",cap,dyfi,general-link,geoserve,nearby-cities,origin,phase-data,scitech-link,", "nst": 33, "dmin": 0.05801, "rms": 0.2, "gap": 39, "magType": "ml", "type": "quarry blast", "title": "M 2.5 Quarry Blast - 15km E of Little Lake, CA" }, "geometry": { "type": "Point", "coordinates": [-117.7431667, 35.9595, -1.203] }, "id": "ci37300904" },
+        { "type": "Feature", "properties": { "mag": 0.5, "place": "70km SE of Lakeview, Oregon", "time": 1420156189165, "updated": 1530315702946, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00475017", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=nn00475017&format=geojson", "felt": null, "cdi": null, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 4, "net": "nn", "code": "00475017", "ids": ",nn00475017,", "sources": ",nn,", "types": ",cap,geoserve,nearby-cities,origin,phase-data,", "nst": 4, "dmin": 0.163, "rms": 0.2338, "gap": 225.07, "magType": "ml", "type": "earthquake", "title": "M 0.5 - 70km SE of Lakeview, Oregon" }, "geometry": { "type": "Point", "coordinates": [-119.6275, 41.8495, 6.1] }, "id": "nn00475017" },
+        {
+            "type": "Feature", "properties": {
+                "mag": 1.6, "place": "15km ESE of Cohoe, Alaska", "time": 1420155915725, "updated": 1558406803621, "tz": -540, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ak01521hzuc", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ak0151nki9q & format=geojson","felt":null,"cdi":null,"mmi":null,"alert":null,"status":"reviewed","tsunami":0,"sig":8,"net":"ak","code":"0151nki9q","ids":", ak11477119, ak0151nki9q, ","sources":", ak, ak, ","types":", associate, geoserve, nearby- cities, origin, phase- data, tectonic - summary, ","nst":null,"dmin":null,"rms":0.41,"gap":null,"magType":"ml","type":"earthquake","title":"M 0.7 - 57km S of Cantwell, Alaska"},"geometry":{"type":"Point","coordinates":[-149.2316,62.8856,14.4]},"id":"ak0151nki9q"}],"bbox":[-179.863,-56.805,-1.203,178.9948,81.6983,634.66]}
+var date_end = ""
+var date_init = ""
+var dates = get_dates()
 var URL_obtained;
-
-var URL_obtained = {
-    "type": "FeatureCollection", "metadata": { "generated": 1618446829000, "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2015-01-02", "title": "USGS Earthquakes", "status": 200, "api": "1.10.3", "count": 368 }, "features": [{ "type": "Feature", "properties": { "mag": 2.51, "place": "15km E of Little Lake, CA", "time": 1420156541830, "updated": 1457757227609, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci37300904", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ci37300904&format=geojson", "felt": 2, "cdi": 2.2, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 97, "net": "ci", "code": "37300904", "ids": ",ci37300904,", "sources": ",ci,", "types": ",cap,dyfi,general-link,geoserve,nearby-cities,origin,phase-data,scitech-link,", "nst": 33, "dmin": 0.05801, "rms": 0.2, "gap": 39, "magType": "ml", "type": "quarry blast", "title": "M 2.5 Quarry Blast - 15km E of Little Lake, CA" }, "geometry": { "type": "Point", "coordinates": [-117.7431667, 35.9595, -1.203] }, "id": "ci37300904" },
-    { "type": "Feature", "properties": { "mag": 0.5, "place": "70km SE of Lakeview, Oregon", "time": 1420156189165, "updated": 1530315702946, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00475017", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=nn00475017&format=geojson", "felt": null, "cdi": null, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 4, "net": "nn", "code": "00475017", "ids": ",nn00475017,", "sources": ",nn,", "types": ",cap,geoserve,nearby-cities,origin,phase-data,", "nst": 4, "dmin": 0.163, "rms": 0.2338, "gap": 225.07, "magType": "ml", "type": "earthquake", "title": "M 0.5 - 70km SE of Lakeview, Oregon" }, "geometry": { "type": "Point", "coordinates": [-119.6275, 41.8495, 6.1] }, "id": "nn00475017" },
-    {
-        "type": "Feature", "properties": {
-            "mag": 1.6, "place": "15km ESE of Cohoe, Alaska", "time": 1420155915725, "updated": 1558406803621, "tz": -540, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ak01521hzuc", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ak0151nki9q & format=geojson", "felt": null, "cdi": null, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 8, "net": "ak", "code": "0151nki9q", "ids": ", ak11477119, ak0151nki9q, ", "sources": ", ak, ak, ", "types": ", associate, geoserve, nearby- cities, origin, phase- data, tectonic - summary, ", "nst": null, "dmin": null, "rms": 0.41, "gap": null, "magType": "ml", "type": "earthquake", "title": "M 0.7 - 57km S of Cantwell, Alaska"
-        }, "geometry": { "type": "Point", "coordinates": [-149.2316, 62.8856, 14.4] }, "id": "ak0151nki9q"
-    }], "bbox": [-179.863, -56.805, -1.203, 178.9948, 81.6983, 634.66]
-}
 var Depth_selected = "7"; // include All earthquakeData
+//var range = getRange(Depth_select)
+var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`
+console.log(URL)
 
-createFeatures(URL_obtained.features, "7"); // initial map
+d3.json(URL).then(function (response) {
+    URL_obtained1 = response;
+    // createFeatures(URL_obtained.features, "7"); // initial map
+
+    createFeatures(URL_obtained1.features, Depth_selected)
+     //legend() // initial legend
+    //any other functions that depend on data
+});
+
+//createFeatures(URL_obtained1.features, "7"); // initial map
 legend() // initial legend
 //console.log(URL_obtained.features);
+
 function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select)
-    console.log(earthquakeData);
+
     earthquakeData.forEach((row) => {
         row.properties.mag = +row.properties.mag;
-        row.geometry.coordinates[0] = +row.geometry.coordinates[0];
-        row.geometry.coordinates[1] = +row.geometry.coordinates[1];
-        row.geometry.coordinates[2] = +row.geometry.coordinates[2];
+        row.properties.place = +row.properties.place;
+        row.geometry.coordinates[0] = +row.geometry.coordinates[0]
+        row.geometry.coordinates[1] = +row.geometry.coordinates[1]
+        row.geometry.coordinates[2] = +row.geometry.coordinates[2]
         var mag = row.properties.mag
         var place = row.properties.place
         var lat = row.geometry.coordinates[1];
         var long = row.geometry.coordinates[0];
         var depth = row.geometry.coordinates[2];
-        //var color = get_color(depth);
+
         if (depth > range.lower && depth < range.upper) {
             var color = get_color(depth); //circle color
             //console.log("Luis cumple");
@@ -55,37 +155,13 @@ function createFeatures(earthquakeData, Depth_select) {
                 fillOpacity: 0.75,
                 color: color,
                 fillColor: color,
+                className:"Circles",
                 // Adjust radius
                 radius: lat * 1200
-            }).bindPopup("<h2>Magnitude: " + mag + " depth: " + depth + " </h2> <hr> <h3>City: " + place + "</h3>").addTo(myMap);
+            }).bindPopup("<h2>Magnitude: " + mag + " depth: " + depth + " </h2> <hr> <h3>City: " + place + "</h3>").addTo(layers.Earthquake);
         }
     });
 }
-
-// case depth for color circle in map ===================
-function get_color(depth) {
-    if (depth <= 10) {
-        console.log("depth lest than ten");
-        color = "#66cc00";
-    } else if (depth > 10 && depth <= 30) {
-        //console.log("between 10-30")
-        color = "#99cc00";
-    } else if (depth > 30 && depth <= 50) {
-        console.log("between 30-50")
-        color = "#cccc00";
-    } else if (depth > 50 && depth <= 70) {
-        console.log("between 50-70")
-        color = "#cc9900";
-    } else if (depth > 70 && depth <= 90) {
-        console.log("between 50-70")
-        color = "#cc6600";
-    } else {
-        console.log("depth > 90")
-        color = "#661a00"
-    }
-    return color
-}
-// range of depth for legend
 function getRange(Depth_select) {
     let lower = 0;
     let upper = 0;
@@ -136,13 +212,63 @@ function getRange(Depth_select) {
         upper
     };
 }
-// create legend
+// ===============================================
 
+// case depth for color circle in map ===================
+function get_color(depth) {
+    if (depth <= 10) {
+        // console.log("depth lest than ten");
+        color = "#66cc00";
+    } else if (depth > 10 && depth <= 30) {
+        //console.log("between 10-30")
+        color = "#99cc00";
+    } else if (depth > 30 && depth <= 50) {
+        // console.log("between 30-50")
+        color = "#cccc00";
+    } else if (depth > 50 && depth <= 70) {
+        // console.log("between 50-70")
+        color = "#cc9900";
+    } else if (depth > 70 && depth <= 90) {
+        // console.log("between 50-70")
+        color = "#cc6600";
+    } else {
+        // console.log("depth > 90")
+        color = "#661a00"
+    }
+    return color
+}
+
+// ===============================================
+    // event listsener to call function change circle in map 
+
+// ===============================================
+
+// function getColor(d) {
+//     return d > 1000 ? '#800026' :
+//            d > 500  ? '#BD0026' :
+//            d > 200  ? '#E31A1C' :
+//            d > 100  ? '#FC4E2A' :
+//            d > 50   ? '#FD8D3C' :
+//            d > 20   ? '#FEB24C' :
+//            d > 10   ? '#FED976' :
+//                       '#FFEDA0';
+// }
+
+function getColor(d) {
+    return d > 1000 ? '#661a00' :
+            d > 90  ? '#802000' :
+            d > 70  ? '#cc6600' :
+            d > 50  ? '#cc9900' :
+            d > 30  ? '#cccc00' :
+            d > 10  ? '#99cc00' :
+            d > -10 ? '#66cc00' : 
+                      '#66cc00';
+}
 function legend() {
-    var legend = L.control({ position: 'bottomleft' });
-    legend.onAdd = function (map) {
+    var legend1 = L.control({ position: 'bottomleft' });
+    legend1.onAdd = function (map) {
 
-        var div = L.DomUtil.create('div', 'info legend'),
+        var div = L.DomUtil.create('div', 'legends'),
             grades = [-10, 10, 30, 50, 70, 90],
             labels = [];
 
@@ -151,40 +277,48 @@ function legend() {
         div.innerHTML += '<i style="background:white" align="center"><b>Depth</b></i><br>'
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 1) + '" calss="legend" value=' + i + '></i>' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            '<i style="background:' + getColor(grades[i] + 1) + '" class="legend1" value=' + i + '></i>' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
         }
-        div.innerHTML += '<br><i style="background:blue" calss="legend" value=7></i><b>All</>'
+        div.innerHTML += '<br><i style="background:blue" class="legend1" value="7"></i><b>All</>'
         return div;
     };
-    legend.addTo(myMap);
+    legend1.addTo(myMap);
 }
-// ===============================================
+        // iterate over object
+// keys.forEach((key, index) => {
+//     console.log(`${key}: ${courses[key]}`);
+// });
+    
+function get_dates() {
+    var date = new Date();
+    date_end = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
+    date.setDate(date.getDate() - 2);
+    date_init = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
 
-function getColor(d) {
-    return d > 1000 ? '#661a00' :
-        d > 90 ? '#802000' :
-            d > 70 ? '#cc6600' :
-                d > 50 ? '#cc9900' :
-                    d > 30 ? '#cccc00' :
-                        d > 10 ? '#99cc00' :
-                            d > -10 ? '#66cc00' :
-                           '#66cc00'
+    return {
+        date_init,
+        date_end
+    }
 }
-// ====================================================
-    // on click litsener legend
-    d3.selectAll("i")
-        .on("click", function () {
-            var Select_legend = d3.select(this).attr("value");
-            // console.log(Select_legend);
-            if (Select_legend != Depth_selected) {
-                Depth_selected = Select_legend
-                var deletepopup = d3.selectAll("path")
-                deletepopup.remove();
-                createFeatures(URL_obtained.features, Depth_selected)
-            } else {
-                console.log("no hago nada")
-            }
-        });
-console.log(new Date());
-console.log("3");
+
+/*var queryUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${date_init}&endtime=${date_end}`;
+console.log(queryUrl)
+*/// ====================================================
+// on click litsener legend
+d3.selectAll(".legend1")
+    .on("click", function () {
+        var Select_legend = d3.select(this).attr("value");
+        // console.log(Select_legend);
+        if (Select_legend != Depth_selected) {
+            Depth_selected = Select_legend
+            var deletepopup = d3.selectAll(".Circles")
+            deletepopup.remove();
+            console.log(`hizo clic: ${Depth_selected}`) ;
+            createFeatures(URL_obtained1.features, Depth_selected)
+        } else {
+            console.log("no hago nada")
+        }     
+    });
+console.log("4");
+console.log(new Date())

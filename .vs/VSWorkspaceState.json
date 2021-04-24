@@ -2,7 +2,9 @@
   "ExpandedNodes": [
     "",
     "\\Leaflet-Step-1",
+    "\\Leaflet-Step-1\\GeoJSON",
     "\\Leaflet-Step-1\\static",
+    "\\Leaflet-Step-1\\static\\css",
     "\\Leaflet-Step-1\\static\\js"
   ],
   "SelectedNode": "\\Leaflet-Step-1\\static\\js\\logic.js",
