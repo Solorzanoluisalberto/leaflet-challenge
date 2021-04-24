@@ -58,31 +58,66 @@ var info = L.control({
 //info.addTo(myMap);
 
 console.log("añadi layer");
-var polygon = L.polygon([
-    [51.509, -0.08],
-    [51.503, -0.06],
-    [51.51, -0.047]
-]);
-polygon.addTo(layers.Tectonic);
+var latlngs = [
+    [33.753746, -84.386330],
+    [40.745255, -74.034775],
+    [42.933334, -76.566666]
+]
+var param = {
+    color: 'yellow',
+    className: 'polygons',
+    fillOpacity: .3
+};
+var polygon = L.polygon(latlngs, param).addTo(layers.Tectonic);
 // read architectural plates data
 /*d3.json("../GeoJSON/plates.json").then(function (response) {
     plates_obtained = response;
     console.log("placas");*/
-var URL_json_obtained = "";
+// ========== Global Variables ==========================
+    var date_end = ""
+    var date_init = ""
+    var dates = get_dates()
+    var URL_obtained={};
+    var Depth_selected = "7"; // include All earthquakeData
+    var geometryPlates = {};
+
+// ========== red tectonic plates data ===============================
 //var URL_json = "http://localhost:8000/static/GeoJSON/plates.json";
 var URL_json = "/static/GeoJSON/plates.json";
+d3.json(URL_json).then(function (response1) {
+    geometryPlates = response1;
+    console.log(geometryPlates.features);
+    create_Tectonics_Plates(geometryPlates.features); // call funxtion create Tectonics plates
+}); 
 
-/*d3.json(URL_json, function (data) {
-    console.log(data.features);
-});*/
-// d3.json(URL_json).then(function (response) {
-//     URL_json_obtained = response;
-//     console.log(URL_json_obtained.features[0].geometry.coordinates);
-//     var polygon = L.polygon(URL_json_obtained.features[0].geometry.coordinates);
-//     polygon.addTo(layers.Tectonic);
+// geometry.forEach((latlngs1) => {
+// console.log(latlngs1.geometry.coordinates);
+// var polygons = L.polygon(latlngs.geometry.coordinates);
+// polygons.addTo(layers.Tectonic);
 
-// });
+function create_Tectonics_Plates(Plates) {
+    let latlngs = Row.geometry.coordinates
+    console.log(Plates)
+    Plates.forEach((Row)=>{
+console.log(Row.geometry.coordinates)
 
+    });
+}
+    
+    // ======================= end =========================================
+// ============ read Earthqueakes data ===============================================================================
+var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`
+console.log(URL)
+
+d3.json(URL).then(function (response) {
+    URL_obtained = response;
+    // createFeatures(URL_obtained.features, "7"); // initial map
+
+    createFeatures(URL_obtained.features, Depth_selected) // call function create circle earthquake
+     //legend() // initial legend
+    //any other functions that depend on data
+});
+//============================ end ===================================================================================
 
     //var json = require('./data.json'); //(with path)
     
@@ -106,28 +141,11 @@ var URL_json = "/static/GeoJSON/plates.json";
         shape: "circle"
     })
 };*/
-var URL_obtained1 = {"type": "FeatureCollection", "metadata": { "generated": 1618446829000, "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2015-01-02", "title": "USGS Earthquakes", "status": 200, "api": "1.10.3", "count": 368 }, "features": [{ "type": "Feature", "properties": { "mag": 2.51, "place": "15km E of Little Lake, CA", "time": 1420156541830, "updated": 1457757227609, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci37300904", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ci37300904&format=geojson", "felt": 2, "cdi": 2.2, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 97, "net": "ci", "code": "37300904", "ids": ",ci37300904,", "sources": ",ci,", "types": ",cap,dyfi,general-link,geoserve,nearby-cities,origin,phase-data,scitech-link,", "nst": 33, "dmin": 0.05801, "rms": 0.2, "gap": 39, "magType": "ml", "type": "quarry blast", "title": "M 2.5 Quarry Blast - 15km E of Little Lake, CA" }, "geometry": { "type": "Point", "coordinates": [-117.7431667, 35.9595, -1.203] }, "id": "ci37300904" },
-        { "type": "Feature", "properties": { "mag": 0.5, "place": "70km SE of Lakeview, Oregon", "time": 1420156189165, "updated": 1530315702946, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00475017", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=nn00475017&format=geojson", "felt": null, "cdi": null, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 4, "net": "nn", "code": "00475017", "ids": ",nn00475017,", "sources": ",nn,", "types": ",cap,geoserve,nearby-cities,origin,phase-data,", "nst": 4, "dmin": 0.163, "rms": 0.2338, "gap": 225.07, "magType": "ml", "type": "earthquake", "title": "M 0.5 - 70km SE of Lakeview, Oregon" }, "geometry": { "type": "Point", "coordinates": [-119.6275, 41.8495, 6.1] }, "id": "nn00475017" },
-        {
-            "type": "Feature", "properties": {
-                "mag": 1.6, "place": "15km ESE of Cohoe, Alaska", "time": 1420155915725, "updated": 1558406803621, "tz": -540, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ak01521hzuc", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ak0151nki9q & format=geojson","felt":null,"cdi":null,"mmi":null,"alert":null,"status":"reviewed","tsunami":0,"sig":8,"net":"ak","code":"0151nki9q","ids":", ak11477119, ak0151nki9q, ","sources":", ak, ak, ","types":", associate, geoserve, nearby- cities, origin, phase- data, tectonic - summary, ","nst":null,"dmin":null,"rms":0.41,"gap":null,"magType":"ml","type":"earthquake","title":"M 0.7 - 57km S of Cantwell, Alaska"},"geometry":{"type":"Point","coordinates":[-149.2316,62.8856,14.4]},"id":"ak0151nki9q"}],"bbox":[-179.863,-56.805,-1.203,178.9948,81.6983,634.66]}
-var date_end = ""
-var date_init = ""
-var dates = get_dates()
-var URL_obtained;
-var Depth_selected = "7"; // include All earthquakeData
-//var range = getRange(Depth_select)
-var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`
-console.log(URL)
-
-d3.json(URL).then(function (response) {
-    URL_obtained1 = response;
-    // createFeatures(URL_obtained.features, "7"); // initial map
-
-    createFeatures(URL_obtained1.features, Depth_selected)
-     //legend() // initial legend
-    //any other functions that depend on data
-});
+// var URL_obtained1 = {"type": "FeatureCollection", "metadata": { "generated": 1618446829000, "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2015-01-02", "title": "USGS Earthquakes", "status": 200, "api": "1.10.3", "count": 368 }, "features": [{ "type": "Feature", "properties": { "mag": 2.51, "place": "15km E of Little Lake, CA", "time": 1420156541830, "updated": 1457757227609, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci37300904", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ci37300904&format=geojson", "felt": 2, "cdi": 2.2, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 97, "net": "ci", "code": "37300904", "ids": ",ci37300904,", "sources": ",ci,", "types": ",cap,dyfi,general-link,geoserve,nearby-cities,origin,phase-data,scitech-link,", "nst": 33, "dmin": 0.05801, "rms": 0.2, "gap": 39, "magType": "ml", "type": "quarry blast", "title": "M 2.5 Quarry Blast - 15km E of Little Lake, CA" }, "geometry": { "type": "Point", "coordinates": [-117.7431667, 35.9595, -1.203] }, "id": "ci37300904" },
+//         { "type": "Feature", "properties": { "mag": 0.5, "place": "70km SE of Lakeview, Oregon", "time": 1420156189165, "updated": 1530315702946, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00475017", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=nn00475017&format=geojson", "felt": null, "cdi": null, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 4, "net": "nn", "code": "00475017", "ids": ",nn00475017,", "sources": ",nn,", "types": ",cap,geoserve,nearby-cities,origin,phase-data,", "nst": 4, "dmin": 0.163, "rms": 0.2338, "gap": 225.07, "magType": "ml", "type": "earthquake", "title": "M 0.5 - 70km SE of Lakeview, Oregon" }, "geometry": { "type": "Point", "coordinates": [-119.6275, 41.8495, 6.1] }, "id": "nn00475017" },
+//         {
+//             "type": "Feature", "properties": {
+//                 "mag": 1.6, "place": "15km ESE of Cohoe, Alaska", "time": 1420155915725, "updated": 1558406803621, "tz": -540, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ak01521hzuc", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ak0151nki9q & format=geojson","felt":null,"cdi":null,"mmi":null,"alert":null,"status":"reviewed","tsunami":0,"sig":8,"net":"ak","code":"0151nki9q","ids":", ak11477119, ak0151nki9q, ","sources":", ak, ak, ","types":", associate, geoserve, nearby- cities, origin, phase- data, tectonic - summary, ","nst":null,"dmin":null,"rms":0.41,"gap":null,"magType":"ml","type":"earthquake","title":"M 0.7 - 57km S of Cantwell, Alaska"},"geometry":{"type":"Point","coordinates":[-149.2316,62.8856,14.4]},"id":"ak0151nki9q"}],"bbox":[-179.863,-56.805,-1.203,178.9948,81.6983,634.66]}
 
 //createFeatures(URL_obtained1.features, "7"); // initial map
 legend() // initial legend
@@ -315,7 +333,7 @@ d3.selectAll(".legend1")
             var deletepopup = d3.selectAll(".Circles")
             deletepopup.remove();
             console.log(`hizo clic: ${Depth_selected}`) ;
-            createFeatures(URL_obtained1.features, Depth_selected)
+            createFeatures(URL_obtained.features, Depth_selected)
         } else {
             console.log("no hago nada")
         }     
