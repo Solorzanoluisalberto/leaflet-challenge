@@ -29,10 +29,11 @@ var URL_obtained = {
     }], "bbox": [-179.863, -56.805, -1.203, 178.9948, 81.6983, 634.66]
 }
 
-createFeatures(URL_obtained.features);
-
-function createFeatures(earthquakeData) {
-
+createFeatures(URL_obtained.features, "7"); // initial map
+legend() // initial legend
+//console.log(URL_obtained.features);
+function createFeatures(earthquakeData, Depth_select) {
+    var range = getRange(Depth_select)
     console.log(earthquakeData);
     earthquakeData.forEach((row) => {
         var mag = row.properties.mag
@@ -134,6 +135,43 @@ function getRange(Depth_select) {
         upper
     };
 }
+// create legend
 
+function legend() {
+    var legend = L.control({ position: 'bottomleft' });
+    legend.onAdd = function (map) {
+
+        var div = L.DomUtil.create('div', 'info legend'),
+            grades = [-10, 10, 30, 50, 70, 90],
+            labels = [];
+
+        // <i>Leyend</i>
+        // loop through our density intervals and generate a label with a colored square for each interval
+        div.innerHTML += '<i style="background:white" align="center"><b>Depth</b></i><br>'
+        for (var i = 0; i < grades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + getColor(grades[i] + 1) + '" calss="legend" value=' + i + '></i>' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        }
+        div.innerHTML += '<br><i style="background:blue" calss="legend" value=7></i><b>All</>'
+        return div;
+    };
+    legend.addTo(myMap);
+}
+// ====================================================
+    // on click litsener legend
+    d3.selectAll("i")
+        .on("click", function () {
+            var Select_legend = d3.select(this).attr("value");
+            // console.log(Select_legend);
+            if (Select_legend != Depth_selected) {
+                Depth_selected = Select_legend
+                var deletepopup = d3.selectAll("path")
+                deletepopup.remove();
+                createFeatures(URL_obtained.features, Depth_selected)
+            } else {
+                console.log("no hago nada")
+            }
+        });
 console.log(new Date());
 console.log("3");
