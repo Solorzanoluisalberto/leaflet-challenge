@@ -18,6 +18,7 @@ var myMap = L.map("mapid", {
 EarthquakeLayer.addTo(myMap);
 
 console.log("haz algo")
+var URL_obtained;
 
 var URL_obtained = {
     "type": "FeatureCollection", "metadata": { "generated": 1618446829000, "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2015-01-02", "title": "USGS Earthquakes", "status": 200, "api": "1.10.3", "count": 368 }, "features": [{ "type": "Feature", "properties": { "mag": 2.51, "place": "15km E of Little Lake, CA", "time": 1420156541830, "updated": 1457757227609, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci37300904", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ci37300904&format=geojson", "felt": 2, "cdi": 2.2, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 97, "net": "ci", "code": "37300904", "ids": ",ci37300904,", "sources": ",ci,", "types": ",cap,dyfi,general-link,geoserve,nearby-cities,origin,phase-data,scitech-link,", "nst": 33, "dmin": 0.05801, "rms": 0.2, "gap": 39, "magType": "ml", "type": "quarry blast", "title": "M 2.5 Quarry Blast - 15km E of Little Lake, CA" }, "geometry": { "type": "Point", "coordinates": [-117.7431667, 35.9595, -1.203] }, "id": "ci37300904" },
@@ -28,6 +29,7 @@ var URL_obtained = {
         }, "geometry": { "type": "Point", "coordinates": [-149.2316, 62.8856, 14.4] }, "id": "ak0151nki9q"
     }], "bbox": [-179.863, -56.805, -1.203, 178.9948, 81.6983, 634.66]
 }
+var Depth_selected = "7"; // include All earthquakeData
 
 createFeatures(URL_obtained.features, "7"); // initial map
 legend() // initial legend
@@ -36,16 +38,16 @@ function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select)
     console.log(earthquakeData);
     earthquakeData.forEach((row) => {
+        row.properties.mag = +row.properties.mag;
+        row.geometry.coordinates[0] = +row.geometry.coordinates[0];
+        row.geometry.coordinates[1] = +row.geometry.coordinates[1];
+        row.geometry.coordinates[2] = +row.geometry.coordinates[2];
         var mag = row.properties.mag
         var place = row.properties.place
         var lat = row.geometry.coordinates[1];
         var long = row.geometry.coordinates[0];
         var depth = row.geometry.coordinates[2];
-        console.log(mag);
-        console.log(place);
-        console.log(long);
-        console.log(lat);
-        var color = get_color(depth);
+        //var color = get_color(depth);
         if (depth > range.lower && depth < range.upper) {
             var color = get_color(depth); //circle color
             //console.log("Luis cumple");
@@ -83,7 +85,6 @@ function get_color(depth) {
     }
     return color
 }
-
 // range of depth for legend
 function getRange(Depth_select) {
     let lower = 0;
@@ -157,6 +158,18 @@ function legend() {
         return div;
     };
     legend.addTo(myMap);
+}
+// ===============================================
+
+function getColor(d) {
+    return d > 1000 ? '#661a00' :
+        d > 90 ? '#802000' :
+            d > 70 ? '#cc6600' :
+                d > 50 ? '#cc9900' :
+                    d > 30 ? '#cccc00' :
+                        d > 10 ? '#99cc00' :
+                            d > -10 ? '#66cc00' :
+                           '#66cc00'
 }
 // ====================================================
     // on click litsener legend
