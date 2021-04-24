@@ -57,15 +57,15 @@ var info = L.control({
 // Add the info legend to the map
 //info.addTo(myMap);
 
-console.log("añadi layer");
-var latlngs = [
-    [33.753746, -84.386330],
-    [40.745255, -74.034775],
-    [42.933334, -76.566666]
-]
+// console.log("añadi layer");
+var latlngs = [];
+//     [33.753746, -84.386330],
+//     [40.745255, -74.034775],
+//     [42.933334, -76.566666]
+// ]
 var param = {
     color: 'yellow',
-    className: 'polygons',
+    className: 'TectonicPlates',
     fillOpacity: .3
 };
 var polygon = L.polygon(latlngs, param).addTo(layers.Tectonic);
@@ -96,11 +96,10 @@ d3.json(URL_json).then(function (response1) {
 // polygons.addTo(layers.Tectonic);
 
 function create_Tectonics_Plates(Plates) {
-    let latlngs = Row.geometry.coordinates
     console.log(Plates)
     Plates.forEach((Row)=>{
-console.log(Row.geometry.coordinates)
-
+    latlngs = Row.geometry.coordinates
+    L.polygon(latlngs, param).addTo(layers.Tectonic);
     });
 }
     
