@@ -1,17 +1,21 @@
 ﻿// Adding tile layer to the map
-var earthquakeLayer = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
-    attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> � <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
-    tileSize: 512,
+// Create the tile layer that will be the background of our map
+var EarthquakeLayer = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+    attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
     maxZoom: 18,
-    zoomOffset: -1,
-    id: "mapbox/streets-v11",
+    id: "light-v10",
     accessToken: API_KEY
 });
-// Create a map object
+
+// Initialize all of the LayerGroups we'll be using
+
+// Create the map with our layers
 var myMap = L.map("mapid", {
-    center: [37.09, -95.71],
-    zoom: 4
+    center: [39.113014, -105.358887],
+    zoom: 3
 });
+
+EarthquakeLayer.addTo(myMap);
 
 console.log("haz algo")
 
@@ -35,21 +39,47 @@ function createFeatures(earthquakeData) {
         var place = row.properties.place
         var lat = row.geometry.coordinates[1];
         var long = row.geometry.coordinates[0];
-
+        var depth = row.geometry.coordinates[2];
         console.log(mag);
         console.log(place);
         console.log(long);
         console.log(lat);
-
+        var color = get_color(depth);
         L.circle([lat, long], {
             fillOpacity: 0.75,
-            color: "white",
-            fillColor: "yellow",
+            color: color,
+            fillColor: color,
             // Adjust radius
-            radius: mag * 1500
+            radius: lat * 1200
         }).bindPopup("<h1>" + mag + "</h1> <hr> <h3>City: " + place + "</h3>").addTo(myMap);
 
     });
 }
 
+// case depth for color circle in map ===================
+function get_color(depth) {
+    if (depth <= 10) {
+        console.log("depth lest than ten");
+        color = "#66cc00";
+    } else if (depth > 10 && depth <= 30) {
+        //console.log("between 10-30")
+        color = "#99cc00";
+    } else if (depth > 30 && depth <= 50) {
+        console.log("between 30-50")
+        color = "#cccc00";
+    } else if (depth > 50 && depth <= 70) {
+        console.log("between 50-70")
+        color = "#cc9900";
+    } else if (depth > 70 && depth <= 90) {
+        console.log("between 50-70")
+        color = "#cc6600";
+    } else {
+        console.log("depth > 90")
+        color = "#661a00"
+    }
+    return color
+}
+
+
+console.log(new Date());
 console.log("3");
