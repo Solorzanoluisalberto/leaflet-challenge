@@ -144,7 +144,7 @@ function createFeatures(earthquakeData, Depth_select) {
                 className:"Circles",
                 // Adjust radius
                 radius: lat * 1200
-            }).bindPopup("<h2>Magnitude: " + mag + " depth: " + depth + " </h2> <hr> <h3>City: " + place + "</h3>").addTo(layers.Earthquake);
+            }).bindPopup("<b>Magnitude: </b>" + mag + " <b>Depth:</b> " + depth + "<hr> <b>City: </b>" + place + "").addTo(layers.Earthquake);
         }
     });
 }
@@ -229,7 +229,6 @@ function get_color(depth) {
 
 // ===============================================
 
-
 function getColor(d) {
     return d > 1000 ? '#661a00' :
             d > 90  ? '#802000' :
@@ -247,7 +246,7 @@ function legend() {
         var div = L.DomUtil.create('div', 'legends'),
             grades = [-10, 10, 30, 50, 70, 90],
             labels = [];
-            let dropmenu = `<select name="dates" id="dates" onchange="myFunction(this.value)">
+            let dropmenu = `<select name="dates" id="dates" onchange="FunctionDays(this.value)">
             <option value="7">Last 7 days</option>
             <option value="14">Last 14 days</option>
           </select>`  
@@ -283,7 +282,7 @@ function get_dates(days) {
 }
 
 // function to filter 7 or 14 days before
-function myFunction(Select_days) {
+function FunctionDays(Select_days) {
     // var Select_days = d3.select(this).attr("value");
     console.log(Select_days);
     dates = get_dates(Select_days);
