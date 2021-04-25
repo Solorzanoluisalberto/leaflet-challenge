@@ -1,10 +1,4 @@
-﻿
-// Adding tile layer to the map
-if (!('fetch' in window)) {
-    console.log('Fetch API not found, try including the polyfill');
-  }
-
-var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
+﻿ var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> � <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
     tileSize: 512,
     maxZoom: 18,
@@ -94,8 +88,8 @@ function styleFunction(){
   }
 // ======================= end ====================================
 //=================================================================
-// var URL_json1 = "/static/GeoJSON/boundaries.json";
-var URL_json1 = "https://github.com/fraxen/tectonicplates/blob/master/GeoJSON/PB2002_boundaries.json"
+var URL_json1 = "/static/GeoJSON/boundaries.json";
+//var URL_json1 = "https://github.com/fraxen/tectonicplates/blob/master/GeoJSON/PB2002_boundaries.json"
 d3.json(URL_json1).then(function (geoJsonLayer) {
     //geoJsonLayer = response1
     console.log(geoJsonLayer)
@@ -193,7 +187,7 @@ function getRange(Depth_select) {
             break;
         default:
             console.log("pintar todos")
-            lower = -100;
+            lower = -200;
             upper = 500
             break;
     }
@@ -305,8 +299,10 @@ function FunctionDays(Select_days) {
 console.log(URL)
 
 d3.json(URL).then(function (response) {
-    // URL_obtained = response;
+    URL_obtained = response;
     var deletepopup = d3.selectAll(".Circles")
+    let days = d3.select("#dates").attr("value")
+    console.log(days)
     deletepopup.remove();
     // createFeatures(URL_obtained.features, "7"); // initial map
     createFeatures(response.features, "7") // call function create circle earthquake
