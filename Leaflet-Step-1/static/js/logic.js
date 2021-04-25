@@ -225,7 +225,21 @@ function get_color(depth) {
 }
 
 // ===============================================
-    // event listsener to call function change circle in map 
+// on click listsener legend
+d3.selectAll(".legend1")
+    .on("click", function () {
+        var Select_legend = d3.select(this).attr("value");
+        // console.log(Select_legend);
+        if (Select_legend != Depth_selected) {
+            Depth_selected = Select_legend
+            var deletepopup = d3.selectAll(".Circles")
+            deletepopup.remove();
+            console.log(`hizo clic: ${Depth_selected}`) ;
+            createFeatures(URL_obtained.features, Depth_selected)
+        } else {
+            console.log("no hago nada")
+        }     
+    });
 
 // ===============================================
 
@@ -264,11 +278,8 @@ function legend() {
     };
     legend1.addTo(myMap);
 }
-        // iterate over object
-// keys.forEach((key, index) => {
-//     console.log(`${key}: ${courses[key]}`);
-// });
-  
+
+// ============= get dates range ============
 function get_dates(days) {
     var date = new Date();
     date_end = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
@@ -280,7 +291,6 @@ function get_dates(days) {
         date_end
     }
 }
-
 // function to filter 7 or 14 days before
 function FunctionDays(Select_days) {
     // var Select_days = d3.select(this).attr("value");
@@ -298,24 +308,4 @@ d3.json(URL).then(function (response) {
 });
 }
 
-
-/*var queryUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${date_init}&endtime=${date_end}`;
-console.log(queryUrl)
-*/// ====================================================
-// on click litsener legend
-d3.selectAll(".legend1")
-    .on("click", function () {
-        var Select_legend = d3.select(this).attr("value");
-        // console.log(Select_legend);
-        if (Select_legend != Depth_selected) {
-            Depth_selected = Select_legend
-            var deletepopup = d3.selectAll(".Circles")
-            deletepopup.remove();
-            console.log(`hizo clic: ${Depth_selected}`) ;
-            createFeatures(URL_obtained.features, Depth_selected)
-        } else {
-            console.log("no hago nada")
-        }     
-    });
-console.log("4");
 console.log(new Date())

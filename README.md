@@ -1,6 +1,8 @@
-# Leaflet Homework - Visualizing Data with Leaflet
+### Homework Done:
 
-## Background
+1. Clicking on the legend filters the earthquakes according to the depth range in the display.
+
+2. In the dropdown menu you can select 7 or 14 days of visualization of earthquakes from the page: U.S. Geological Survey
 
 ![1-Logo](Images/1-Logo.png)
 
