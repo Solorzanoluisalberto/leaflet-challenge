@@ -3,6 +3,7 @@
     "",
     "\\static",
     "\\static\\css",
+    "\\static\\GeoJSON",
     "\\static\\js"
   ],
   "SelectedNode": "\\static\\js\\logic.js",

@@ -1,8 +1,4 @@
-﻿d3.selection.prototype.moveToFront = function() {
-    return this.each(function(){
-      this.parentNode.appendChild(this);
-    });
-  };
+﻿
 // Adding tile layer to the map
 var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> � <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
@@ -18,7 +14,8 @@ var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">
     mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
 
 var grayscale = L.tileLayer(mbUrl, { id: 'mapbox/light-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr }),
-satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
+    satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr }),
+    night = L.tileLayer(mbUrl, { id: 'mapbox/navigation-night-v1', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
 
 /*var ColoredMap = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
     maxZoom: 18,
@@ -34,81 +31,74 @@ satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOf
 var baseMaps = {
     "Earthquakes": Earthquakes,
     "Gray Scale": grayscale,
-    "Satalite": satalite
+    "Satalite": satalite,
+    "Night": night
 };
-/*
-// Create a map object
-var myMap = L.map("mapid", {
-    center: [39.113014, -105.358887],
-    zoom: 3
-});*/
+//var myLayer = L.geoJSON().addTo(myMap);
+
 // Initialize all of the LayerGroups we'll be using
 var layers = {
     Earthquake: new L.LayerGroup(),
-    Tectonic: new L.LayerGroup()
+    Tectonic: new L.LayerGroup(),
+    Tectonic2: new L.LayerGroup()
 };
 
 // Create the map with our layers
 var myMap = L.map("mapid", {
-    center: [39.113014, -105.358887],
+    center: [34.8710, -79.7554], //Coward SC
     zoom: 3,
     layers: [
         layers.Earthquake,
-        layers.Tectonic
+        layers.Tectonic,
+        layers.Tectonic2
     ]
 });
 Earthquakes.addTo(myMap);
 
 var overlaysMaps = {
     "Earthquake": layers.Earthquake,
-    "Tectonic": layers.Tectonic
+    "Tectonic Plates": layers.Tectonic,
+    "Tectonic Plates I": layers.Tectonic2
 };
 // Create a control for our layers, add our overlay layers to it
 L.control.layers(baseMaps, overlaysMaps).addTo(myMap);
-
-// Create a legend to display information about our map
-// var info = L.control({
-//     position: "bottomright"
-// });
-
-//var polygon = L.polygon(latlngs, param).addTo(layers.Tectonic);
-// read architectural plates data
 // ========== Global Variables =================================
 var latlngs = [];
 var param = {
     color: 'yellow',
     className: 'TectonicPlates',
-    fillOpacity: .3
+    fillOpacity: .1
 };
 var date_end = ""
 var date_init = ""
-var dates = get_dates()
+var dates = get_dates("7") // last seven days search
 var URL_obtained={};
 var Depth_selected = "7"; // include All earthquakeData
 var geometryPlates = {};
-//=================================================================
-
 // ========== red tectonic plates data ===============================
 //var URL_json = "http://localhost:8000/static/GeoJSON/plates.json";
 var URL_json = "/static/GeoJSON/plates.json";
 d3.json(URL_json).then(function (response1) {
-    geometryPlates = response1;
-    create_Tectonics_Plates(geometryPlates.features); // call funxtion create Tectonics plates
+    //let geoJsonLayerPlates = L.geoJson(response1,{style: styleFunction})
+    let geoJsonLayerPlates = L.geoJson(response1,param)
+
+        .addTo(layers.Tectonic2);
+    //create_Tectonics_Plates(geometryPlates.features); // call funxtion create Tectonics plates
 }); 
-
-// geometry.forEach((latlngs1) => {
-// console.log(latlngs1.geometry.coordinates);
-// var polygons = L.polygon(latlngs.geometry.coordinates);
-// polygons.addTo(layers.Tectonic);
-
-function create_Tectonics_Plates(Plates) {
-    console.log(Plates)
-    Plates.forEach((Row)=>{
-    latlngs = Row.geometry.coordinates
-    L.polygon(latlngs, param).addTo(layers.Tectonic);
-    });
-}
-// ======================= end =========================================
+function styleFunction(){
+    return {color: "purple"};
+  }
+// ======================= end ====================================
+//=================================================================
+var URL_json1 = "/static/GeoJSON/boundaries.json";
+d3.json(URL_json1).then(function (geoJsonLayer) {
+    //geoJsonLayer = response1
+    console.log(geoJsonLayer)
+    //let geoJsonLayer1 = L.geoJson(geoJsonLayer, { style: styleFunction })
+    let geoJsonLayer1 = L.geoJson(geoJsonLayer)
+        .addTo(layers.Tectonic);
+   // create_Tectonics_Plates(geometryPlates.features); // call funxtion create Tectonics plates
+}); 
 
 // ============ read Earthqueakes data ===============================================================================
 var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`
@@ -129,11 +119,10 @@ d3.json(URL).then(function (response) {
 
 //createFeatures(URL_obtained1.features, "7"); // initial map
 legend() // initial legend
-//console.log(URL_obtained.features);
 
 function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select)
-
+    console.log(earthquakeData);
     earthquakeData.forEach((row) => {
         row.properties.mag = +row.properties.mag;
         row.geometry.coordinates[0] = +row.geometry.coordinates[0]
@@ -240,16 +229,6 @@ function get_color(depth) {
 
 // ===============================================
 
-// function getColor(d) {
-//     return d > 1000 ? '#800026' :
-//            d > 500  ? '#BD0026' :
-//            d > 200  ? '#E31A1C' :
-//            d > 100  ? '#FC4E2A' :
-//            d > 50   ? '#FD8D3C' :
-//            d > 20   ? '#FEB24C' :
-//            d > 10   ? '#FED976' :
-//                       '#FFEDA0';
-// }
 
 function getColor(d) {
     return d > 1000 ? '#661a00' :
@@ -268,9 +247,13 @@ function legend() {
         var div = L.DomUtil.create('div', 'legends'),
             grades = [-10, 10, 30, 50, 70, 90],
             labels = [];
-
+            let dropmenu = `<select name="dates" id="dates" onchange="myFunction(this.value)">
+            <option value="7">Last 7 days</option>
+            <option value="14">Last 14 days</option>
+          </select>`  
         // <i>Leyend</i>
         // loop through our density intervals and generate a label with a colored square for each interval
+        div.innerHTML += '<i style="background:white" align="center"><b>' + dropmenu + '</i><br>'
         div.innerHTML += '<i style="background:white" align="center"><b>Depth</b></i><br>'
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
@@ -286,11 +269,11 @@ function legend() {
 // keys.forEach((key, index) => {
 //     console.log(`${key}: ${courses[key]}`);
 // });
-    
-function get_dates() {
+  
+function get_dates(days) {
     var date = new Date();
     date_end = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
-    date.setDate(date.getDate() - 7);
+    date.setDate(date.getDate() - days);
     date_init = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
 
     return {
@@ -298,6 +281,24 @@ function get_dates() {
         date_end
     }
 }
+
+// function to filter 7 or 14 days before
+function myFunction(Select_days) {
+    // var Select_days = d3.select(this).attr("value");
+    console.log(Select_days);
+    dates = get_dates(Select_days);
+    var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`
+console.log(URL)
+
+d3.json(URL).then(function (response) {
+    // URL_obtained = response;
+    var deletepopup = d3.selectAll(".Circles")
+    deletepopup.remove();
+    // createFeatures(URL_obtained.features, "7"); // initial map
+    createFeatures(response.features, "7") // call function create circle earthquake
+});
+}
+
 
 /*var queryUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${date_init}&endtime=${date_end}`;
 console.log(queryUrl)
