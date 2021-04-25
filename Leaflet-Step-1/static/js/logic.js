@@ -13,6 +13,29 @@ var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{
     accessToken: API_KEY
     
 });
+var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+    'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+var grayscale = L.tileLayer(mbUrl, { id: 'mapbox/light-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr }),
+satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
+
+/*var ColoredMap = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+    maxZoom: 18,
+    attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+        'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+    id: 'mapbox/light-v9',
+    tileSize: 512,
+    zoomOffset: -1,
+    accessToken: API_KEY
+});*/
+
+// Define baseMaps Object to Hold Base Layers
+var baseMaps = {
+    "Earthquakes": Earthquakes,
+    "Gray Scale": grayscale,
+    "Satalite": satalite
+};
 /*
 // Create a map object
 var myMap = L.map("mapid", {
@@ -41,52 +64,35 @@ var overlaysMaps = {
     "Tectonic": layers.Tectonic
 };
 // Create a control for our layers, add our overlay layers to it
-L.control.layers(null, overlaysMaps).addTo(myMap);
-
+L.control.layers(baseMaps, overlaysMaps).addTo(myMap);
 
 // Create a legend to display information about our map
-var info = L.control({
-    position: "bottomright"
-});
+// var info = L.control({
+//     position: "bottomright"
+// });
 
-// When the layer control is added, insert a div with the class of "legend"
-// info.onAdd = function () {
-//     var div = L.DomUtil.create("div", "maplegend");
-//     return div;
-// };
-// Add the info legend to the map
-//info.addTo(myMap);
-
-// console.log("añadi layer");
+//var polygon = L.polygon(latlngs, param).addTo(layers.Tectonic);
+// read architectural plates data
+// ========== Global Variables =================================
 var latlngs = [];
-//     [33.753746, -84.386330],
-//     [40.745255, -74.034775],
-//     [42.933334, -76.566666]
-// ]
 var param = {
     color: 'yellow',
     className: 'TectonicPlates',
     fillOpacity: .3
 };
-var polygon = L.polygon(latlngs, param).addTo(layers.Tectonic);
-// read architectural plates data
-/*d3.json("../GeoJSON/plates.json").then(function (response) {
-    plates_obtained = response;
-    console.log("placas");*/
-// ========== Global Variables ==========================
-    var date_end = ""
-    var date_init = ""
-    var dates = get_dates()
-    var URL_obtained={};
-    var Depth_selected = "7"; // include All earthquakeData
-    var geometryPlates = {};
+var date_end = ""
+var date_init = ""
+var dates = get_dates()
+var URL_obtained={};
+var Depth_selected = "7"; // include All earthquakeData
+var geometryPlates = {};
+//=================================================================
 
 // ========== red tectonic plates data ===============================
 //var URL_json = "http://localhost:8000/static/GeoJSON/plates.json";
 var URL_json = "/static/GeoJSON/plates.json";
 d3.json(URL_json).then(function (response1) {
     geometryPlates = response1;
-    console.log(geometryPlates.features);
     create_Tectonics_Plates(geometryPlates.features); // call funxtion create Tectonics plates
 }); 
 
@@ -102,8 +108,8 @@ function create_Tectonics_Plates(Plates) {
     L.polygon(latlngs, param).addTo(layers.Tectonic);
     });
 }
-    
-    // ======================= end =========================================
+// ======================= end =========================================
+
 // ============ read Earthqueakes data ===============================================================================
 var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`
 console.log(URL)
@@ -111,35 +117,10 @@ console.log(URL)
 d3.json(URL).then(function (response) {
     URL_obtained = response;
     // createFeatures(URL_obtained.features, "7"); // initial map
-
     createFeatures(URL_obtained.features, Depth_selected) // call function create circle earthquake
-     //legend() // initial legend
-    //any other functions that depend on data
 });
 //============================ end ===================================================================================
 
-    //var json = require('./data.json'); //(with path)
-    
-    //createFeatures(URL_obtained.features, Depth_selected)
-    //legend() // initial legend
-    //any other functions that depend on data
-//});
-
-// Initialize an object containing icons for each layer group
-/*var icons = {
-    Earthquake: L.ExtraMarkers.icon({
-        icon: "ion-settings",
-        iconColor: "white",
-        markerColor: "yellow",
-        shape: "star"
-    }),
-    Tectonic: L.ExtraMarkers.icon({
-        icon: "ion-android-bicycle",
-        iconColor: "white",
-        markerColor: "red",
-        shape: "circle"
-    })
-};*/
 // var URL_obtained1 = {"type": "FeatureCollection", "metadata": { "generated": 1618446829000, "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2015-01-01&endtime=2015-01-02", "title": "USGS Earthquakes", "status": 200, "api": "1.10.3", "count": 368 }, "features": [{ "type": "Feature", "properties": { "mag": 2.51, "place": "15km E of Little Lake, CA", "time": 1420156541830, "updated": 1457757227609, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci37300904", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=ci37300904&format=geojson", "felt": 2, "cdi": 2.2, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 97, "net": "ci", "code": "37300904", "ids": ",ci37300904,", "sources": ",ci,", "types": ",cap,dyfi,general-link,geoserve,nearby-cities,origin,phase-data,scitech-link,", "nst": 33, "dmin": 0.05801, "rms": 0.2, "gap": 39, "magType": "ml", "type": "quarry blast", "title": "M 2.5 Quarry Blast - 15km E of Little Lake, CA" }, "geometry": { "type": "Point", "coordinates": [-117.7431667, 35.9595, -1.203] }, "id": "ci37300904" },
 //         { "type": "Feature", "properties": { "mag": 0.5, "place": "70km SE of Lakeview, Oregon", "time": 1420156189165, "updated": 1530315702946, "tz": -480, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00475017", "detail": "https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=nn00475017&format=geojson", "felt": null, "cdi": null, "mmi": null, "alert": null, "status": "reviewed", "tsunami": 0, "sig": 4, "net": "nn", "code": "00475017", "ids": ",nn00475017,", "sources": ",nn,", "types": ",cap,geoserve,nearby-cities,origin,phase-data,", "nst": 4, "dmin": 0.163, "rms": 0.2338, "gap": 225.07, "magType": "ml", "type": "earthquake", "title": "M 0.5 - 70km SE of Lakeview, Oregon" }, "geometry": { "type": "Point", "coordinates": [-119.6275, 41.8495, 6.1] }, "id": "nn00475017" },
 //         {
@@ -155,7 +136,6 @@ function createFeatures(earthquakeData, Depth_select) {
 
     earthquakeData.forEach((row) => {
         row.properties.mag = +row.properties.mag;
-        row.properties.place = +row.properties.place;
         row.geometry.coordinates[0] = +row.geometry.coordinates[0]
         row.geometry.coordinates[1] = +row.geometry.coordinates[1]
         row.geometry.coordinates[2] = +row.geometry.coordinates[2]
@@ -310,7 +290,7 @@ function legend() {
 function get_dates() {
     var date = new Date();
     date_end = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
-    date.setDate(date.getDate() - 2);
+    date.setDate(date.getDate() - 7);
     date_init = date.getFullYear() + "/" + (date.getMonth() + 1) + "/" + date.getDate();
 
     return {
