@@ -10,17 +10,18 @@ var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{
 var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
     'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
 
+// Use your API_KEY from config.js
 var mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + API_KEY;
 
 var grayscale = L.tileLayer(mbUrl, { id: 'mapbox/light-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
-var satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
+var satellite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
 var night = L.tileLayer(mbUrl, { id: 'mapbox/navigation-night-v1', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
 
 // Define baseMaps Object to Hold Base Layers
 var baseMaps = {
     "Earthquakes": Earthquakes,
     "Gray Scale": grayscale,
-    "Satellite": satalite,
+    "Satellite": satellite,
     "Night": night
 };
 
@@ -55,9 +56,9 @@ L.control.layers(baseMaps, overlaysMaps).addTo(myMap);
 
 // ========== Global Variables =================================
 var param = {
-    color: 'yellow',
-    className: 'TectonicPlates',
-    fillOpacity: .1
+    color: "yellow",
+    className: "TectonicPlates",
+    fillOpacity: 0.1
 };
 
 var date_end = "";
@@ -66,8 +67,9 @@ var dates = get_dates("7"); // last seven days search
 var URL_obtained = {};
 var Depth_selected = "7"; // include all earthquakeData
 
-// ========== red tectonic plates data ===============================
-var URL_json = "/static/GeoJSON/plates.json";
+// ========== Tectonic plates data ===============================
+// Relative paths work better in GitHub Pages than paths beginning with "/"
+var URL_json = "static/GeoJSON/plates.json";
 
 d3.json(URL_json).then(function (response1) {
     L.geoJson(response1, param).addTo(layers.Tectonic2);
@@ -78,14 +80,14 @@ function styleFunction() {
 }
 
 //=================================================================
-var URL_json1 = "/static/GeoJSON/boundaries.json";
+var URL_json1 = "static/GeoJSON/boundaries.json";
 
 d3.json(URL_json1).then(function (geoJsonLayer) {
     console.log(geoJsonLayer);
     L.geoJson(geoJsonLayer).addTo(layers.Tectonic);
 });
 
-// ============ read Earthquakes data ===============================================================================
+// ============ Read Earthquakes data ==============================================================================
 var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`;
 console.log(URL);
 
@@ -96,12 +98,19 @@ d3.json(URL).then(function (response) {
 
 legend(); // initial legend
 
+// ===================================================================================================================
+// Create earthquake markers
+// This version uses:
+// 1. A small dot at the real earthquake location.
+// 2. A black line from the real location to the clickable marker.
+// 3. A separated clickable marker to make overlapping earthquakes easier to select.
+// ===================================================================================================================
 function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select);
 
     earthquakeData.forEach((row, index) => {
         var mag = Number(row.properties.mag);
-        var place = row.properties.place;
+        var place = row.properties.place || "Location not available";
         var long = Number(row.geometry.coordinates[0]);
         var lat = Number(row.geometry.coordinates[1]);
         var depth = Number(row.geometry.coordinates[2]);
@@ -120,14 +129,20 @@ function createFeatures(earthquakeData, Depth_select) {
         if (depth > range.lower && depth < range.upper) {
             var color = get_color(depth);
 
-            // Offset to separate close earthquake markers
-            var angle = (index % 8) * 45;
-            var offsetDistance = 0.35;
+            // Create a screen-based offset so the clickable marker is visibly separated.
+            // This makes close earthquakes easier to click.
+            var angle = (index % 12) * 30; // 12 possible directions
+            var offsetPixels = 45 + ((index % 3) * 15); // 45, 60, or 75 pixels
 
-            var offsetLat = lat + Math.sin(angle * Math.PI / 180) * offsetDistance;
-            var offsetLong = long + Math.cos(angle * Math.PI / 180) * offsetDistance;
+            var originalPoint = myMap.project([lat, long], myMap.getZoom());
+            var offsetPoint = L.point(
+                originalPoint.x + Math.cos(angle * Math.PI / 180) * offsetPixels,
+                originalPoint.y + Math.sin(angle * Math.PI / 180) * offsetPixels
+            );
 
-            // Small dot at the real earthquake location
+            var offsetLatLng = myMap.unproject(offsetPoint, myMap.getZoom());
+
+            // Small dot at the real USGS earthquake location
             L.circleMarker([lat, long], {
                 radius: 4,
                 color: "black",
@@ -137,19 +152,20 @@ function createFeatures(earthquakeData, Depth_select) {
                 className: "Circles"
             }).addTo(layers.Earthquake);
 
-            // Line from real location to separated clickable marker
-            L.polyline([[lat, long], [offsetLat, offsetLong]], {
+            // Black line from the real location to the clickable separated marker
+            L.polyline([[lat, long], offsetLatLng], {
                 color: "black",
-                weight: 1,
-                opacity: 0.6,
+                weight: 2,
+                opacity: 0.75,
+                dashArray: "4,4",
                 className: "Circles"
             }).addTo(layers.Earthquake);
 
             // Clickable separated marker
-            L.circleMarker([offsetLat, offsetLong], {
-                radius: mag ? mag * 3 + 4 : 5,
-                fillOpacity: 0.75,
-                color: color,
+            L.circleMarker(offsetLatLng, {
+                radius: mag ? mag * 3 + 6 : 6,
+                fillOpacity: 0.85,
+                color: "black",
                 fillColor: color,
                 weight: 2,
                 className: "Circles"
@@ -212,7 +228,7 @@ function getRange(Depth_select) {
     };
 }
 
-// case depth for color circle in map ===================
+// Case depth for color circle in map ===================
 function get_color(depth) {
     let color;
 
@@ -233,38 +249,22 @@ function get_color(depth) {
     return color;
 }
 
-// on click listener legend
-d3.selectAll(".legend1")
-    .on("click", function () {
-        var Select_legend = d3.select(this).attr("value");
-
-        if (Select_legend != Depth_selected) {
-            Depth_selected = Select_legend;
-
-            // Better way to remove old earthquake circles
-            layers.Earthquake.clearLayers();
-
-            console.log(`Clicked depth filter: ${Depth_selected}`);
-            createFeatures(URL_obtained.features, Depth_selected);
-        }
-    });
-
 function getColor(d) {
-    return d > 1000 ? '#661a00' :
-           d > 90   ? '#802000' :
-           d > 70   ? '#cc6600' :
-           d > 50   ? '#cc9900' :
-           d > 30   ? '#cccc00' :
-           d > 10   ? '#99cc00' :
-           d > -10  ? '#66cc00' :
-                      '#66cc00';
+    return d > 1000 ? "#661a00" :
+           d > 90   ? "#802000" :
+           d > 70   ? "#cc6600" :
+           d > 50   ? "#cc9900" :
+           d > 30   ? "#cccc00" :
+           d > 10   ? "#99cc00" :
+           d > -10  ? "#66cc00" :
+                      "#66cc00";
 }
 
 function legend() {
-    var legend1 = L.control({ position: 'bottomleft' });
+    var legend1 = L.control({ position: "bottomleft" });
 
     legend1.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'legends');
+        var div = L.DomUtil.create("div", "legends");
         var grades = [-10, 10, 30, 50, 70, 90];
 
         let dropmenu = `<select name="dates" id="dates" onchange="FunctionDays(this.value)">
@@ -278,7 +278,7 @@ function legend() {
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
                 '<i style="background:' + getColor(grades[i] + 1) + '" class="legend1" value="' + i + '"></i>' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+                grades[i] + (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
         }
 
         div.innerHTML += '<br><i style="background:blue" class="legend1" value="7"></i><b>All</b>';
@@ -289,7 +289,24 @@ function legend() {
     legend1.addTo(myMap);
 }
 
-// ============= get dates range ============
+// On click listener legend
+// This must run after legend() creates the legend elements.
+d3.selectAll(".legend1")
+    .on("click", function () {
+        var Select_legend = d3.select(this).attr("value");
+
+        if (Select_legend != Depth_selected) {
+            Depth_selected = Select_legend;
+
+            // Remove old earthquake circles, dots, and lines
+            layers.Earthquake.clearLayers();
+
+            console.log(`Clicked depth filter: ${Depth_selected}`);
+            createFeatures(URL_obtained.features, Depth_selected);
+        }
+    });
+
+// ============= Get dates range ============
 function get_dates(days) {
     var date = new Date();
 
@@ -305,7 +322,7 @@ function get_dates(days) {
     };
 }
 
-// function to filter 7 or 14 days before
+// Function to filter 7 or 14 days before
 function FunctionDays(Select_days) {
     console.log(Select_days);
 
@@ -323,5 +340,14 @@ function FunctionDays(Select_days) {
         createFeatures(response.features, Depth_selected);
     });
 }
+
+// Recalculate the separated markers when zoom changes.
+// This keeps the separated markers and leader lines visible after zooming.
+myMap.on("zoomend", function () {
+    if (URL_obtained.features) {
+        layers.Earthquake.clearLayers();
+        createFeatures(URL_obtained.features, Depth_selected);
+    }
+});
 
 console.log(new Date());
