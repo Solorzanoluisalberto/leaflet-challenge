@@ -33,3 +33,38 @@ html {
   background-color: azure;
   
 }
+.project-header {
+    position: absolute;
+    top: 10px;
+    left: 50px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.90);
+    padding: 10px 14px;
+    border-radius: 6px;
+    max-width: 360px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    font-family: Arial, sans-serif;
+}
+
+.project-header h1 {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+}
+
+.project-header p {
+    margin: 0;
+    font-size: 13px;
+}
+/* Add this to static/css/style.css if the popup still looks too wide */
+.earthquake-popup .leaflet-popup-content {
+    max-width: 220px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.earthquake-popup-content {
+    max-width: 220px;
+}
