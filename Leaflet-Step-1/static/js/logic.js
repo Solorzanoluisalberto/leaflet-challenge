@@ -99,33 +99,60 @@ legend(); // initial legend
 function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select);
 
-    earthquakeData.forEach((row) => {
+    earthquakeData.forEach((row, index) => {
         var mag = Number(row.properties.mag);
         var place = row.properties.place;
         var long = Number(row.geometry.coordinates[0]);
         var lat = Number(row.geometry.coordinates[1]);
         var depth = Number(row.geometry.coordinates[2]);
+
         var locationParts = place.split(",");
-        var stateDistrict = locationParts.length > 1 
-            ? locationParts[locationParts.length - 1].trim() 
+        var stateDistrict = locationParts.length > 1
+            ? locationParts[locationParts.length - 1].trim()
             : "Not specified";
-        // IMPORTANT:
-        // USGS earthquake time is stored in row.properties.time,
+
+        // USGS earthquake time is stored in row.properties.time
         var earthquakeTime = Number(row.properties.time);
         var formattedTime = isNaN(earthquakeTime)
             ? "Time not available"
             : new Date(earthquakeTime).toLocaleString();
+
         if (depth > range.lower && depth < range.upper) {
             var color = get_color(depth);
 
-            L.circle([lat, long], {
+            // Offset to separate close earthquake markers
+            var angle = (index % 8) * 45;
+            var offsetDistance = 0.35;
+
+            var offsetLat = lat + Math.sin(angle * Math.PI / 180) * offsetDistance;
+            var offsetLong = long + Math.cos(angle * Math.PI / 180) * offsetDistance;
+
+            // Small dot at the real earthquake location
+            L.circleMarker([lat, long], {
+                radius: 4,
+                color: "black",
+                fillColor: color,
+                fillOpacity: 1,
+                weight: 1,
+                className: "Circles"
+            }).addTo(layers.Earthquake);
+
+            // Line from real location to separated clickable marker
+            L.polyline([[lat, long], [offsetLat, offsetLong]], {
+                color: "black",
+                weight: 1,
+                opacity: 0.6,
+                className: "Circles"
+            }).addTo(layers.Earthquake);
+
+            // Clickable separated marker
+            L.circleMarker([offsetLat, offsetLong], {
+                radius: mag ? mag * 3 + 4 : 5,
                 fillOpacity: 0.75,
                 color: color,
                 fillColor: color,
-                className: "Circles",
-
-                // Better radius: use magnitude, not latitude
-                radius: mag ? mag * 25000 : 5000
+                weight: 2,
+                className: "Circles"
             }).bindPopup(`
                 <div class="earthquake-popup-content">
                     <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
