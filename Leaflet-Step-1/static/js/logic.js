@@ -10,34 +10,17 @@ var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{
 var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
     'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
 
-var mbUrl = "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=" + API_KEY;
+var mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + API_KEY;
 
-var grayscale = L.tileLayer(mbUrl, {
-    id: "mapbox/light-v9",
-    tileSize: 512,
-    zoomOffset: -1,
-    attribution: mbAttr
-});
-
-var satellite = L.tileLayer(mbUrl, {
-    id: "mapbox/satellite-v9",
-    tileSize: 512,
-    zoomOffset: -1,
-    attribution: mbAttr
-});
-
-var night = L.tileLayer(mbUrl, {
-    id: "mapbox/navigation-night-v1",
-    tileSize: 512,
-    zoomOffset: -1,
-    attribution: mbAttr
-});
+var grayscale = L.tileLayer(mbUrl, { id: 'mapbox/light-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
+var satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
+var night = L.tileLayer(mbUrl, { id: 'mapbox/navigation-night-v1', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
 
 // Define baseMaps Object to Hold Base Layers
 var baseMaps = {
     "Earthquakes": Earthquakes,
     "Gray Scale": grayscale,
-    "Satellite": satellite,
+    "Satellite": satalite,
     "Night": night
 };
 
@@ -72,9 +55,9 @@ L.control.layers(baseMaps, overlaysMaps).addTo(myMap);
 
 // ========== Global Variables =================================
 var param = {
-    color: "yellow",
-    className: "TectonicPlates",
-    fillOpacity: 0.1
+    color: 'yellow',
+    className: 'TectonicPlates',
+    fillOpacity: .1
 };
 
 var date_end = "";
@@ -83,15 +66,19 @@ var dates = get_dates("7"); // last seven days search
 var URL_obtained = {};
 var Depth_selected = "7"; // include all earthquakeData
 
-// ========== Tectonic plates data ===============================
-// Relative paths work better on GitHub Pages than paths beginning with "/"
-var URL_json = "static/GeoJSON/plates.json";
+// ========== red tectonic plates data ===============================
+var URL_json = "/static/GeoJSON/plates.json";
 
 d3.json(URL_json).then(function (response1) {
     L.geoJson(response1, param).addTo(layers.Tectonic2);
 });
 
-var URL_json1 = "static/GeoJSON/boundaries.json";
+function styleFunction() {
+    return { color: "purple" };
+}
+
+//=================================================================
+var URL_json1 = "/static/GeoJSON/boundaries.json";
 
 d3.json(URL_json1).then(function (geoJsonLayer) {
     console.log(geoJsonLayer);
@@ -114,13 +101,12 @@ function createFeatures(earthquakeData, Depth_select) {
 
     earthquakeData.forEach((row) => {
         var mag = Number(row.properties.mag);
-        var place = row.properties.place || "Location not available";
+        var place = row.properties.place;
         var long = Number(row.geometry.coordinates[0]);
         var lat = Number(row.geometry.coordinates[1]);
         var depth = Number(row.geometry.coordinates[2]);
 
-        var locationParts = place.split(",");
-
+        // IMPORTANT:
         // USGS earthquake time is stored in row.properties.time, not geometry.coordinates[3].
         var earthquakeTime = Number(row.properties.time);
         var formattedTime = isNaN(earthquakeTime)
@@ -136,13 +122,13 @@ function createFeatures(earthquakeData, Depth_select) {
                 fillColor: color,
                 className: "Circles",
 
-                // Radius in meters. Magnitude controls circle size.
+                // Better radius: use magnitude, not latitude
                 radius: mag ? mag * 25000 : 5000
             }).bindPopup(`
                 <div class="earthquake-popup-content">
-                    <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
+                    <b>Magnitude:</b> ${mag}<br>
+                    <b>Depth:</b> ${depth} km<br>
                     <b>Location:</b> ${place}<br>
-                    <b>State / District:</b> ${stateDistrict}<br>
                     <b>Time:</b> ${formattedTime}
                 </div>
             `, {
@@ -197,7 +183,7 @@ function getRange(Depth_select) {
     };
 }
 
-// Case depth for color circle in map ===================
+// case depth for color circle in map ===================
 function get_color(depth) {
     let color;
 
@@ -218,40 +204,38 @@ function get_color(depth) {
     return color;
 }
 
-// On click listener legend
-function addLegendClickListener() {
-    d3.selectAll(".legend1")
-        .on("click", function () {
-            var Select_legend = d3.select(this).attr("value");
+// on click listener legend
+d3.selectAll(".legend1")
+    .on("click", function () {
+        var Select_legend = d3.select(this).attr("value");
 
-            if (Select_legend != Depth_selected) {
-                Depth_selected = Select_legend;
+        if (Select_legend != Depth_selected) {
+            Depth_selected = Select_legend;
 
-                // Remove old earthquake circles
-                layers.Earthquake.clearLayers();
+            // Better way to remove old earthquake circles
+            layers.Earthquake.clearLayers();
 
-                console.log(`Clicked depth filter: ${Depth_selected}`);
-                createFeatures(URL_obtained.features, Depth_selected);
-            }
-        });
-}
+            console.log(`Clicked depth filter: ${Depth_selected}`);
+            createFeatures(URL_obtained.features, Depth_selected);
+        }
+    });
 
 function getColor(d) {
-    return d > 1000 ? "#661a00" :
-           d > 90   ? "#802000" :
-           d > 70   ? "#cc6600" :
-           d > 50   ? "#cc9900" :
-           d > 30   ? "#cccc00" :
-           d > 10   ? "#99cc00" :
-           d > -10  ? "#66cc00" :
-                      "#66cc00";
+    return d > 1000 ? '#661a00' :
+           d > 90   ? '#802000' :
+           d > 70   ? '#cc6600' :
+           d > 50   ? '#cc9900' :
+           d > 30   ? '#cccc00' :
+           d > 10   ? '#99cc00' :
+           d > -10  ? '#66cc00' :
+                      '#66cc00';
 }
 
 function legend() {
-    var legend1 = L.control({ position: "bottomleft" });
+    var legend1 = L.control({ position: 'bottomleft' });
 
-    legend1.onAdd = function () {
-        var div = L.DomUtil.create("div", "legends");
+    legend1.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'legends');
         var grades = [-10, 10, 30, 50, 70, 90];
 
         let dropmenu = `<select name="dates" id="dates" onchange="FunctionDays(this.value)">
@@ -265,7 +249,7 @@ function legend() {
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
                 '<i style="background:' + getColor(grades[i] + 1) + '" class="legend1" value="' + i + '"></i>' +
-                grades[i] + (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
         }
 
         div.innerHTML += '<br><i style="background:blue" class="legend1" value="7"></i><b>All</b>';
@@ -274,9 +258,6 @@ function legend() {
     };
 
     legend1.addTo(myMap);
-
-    // Add click listener after legend exists in the page.
-    setTimeout(addLegendClickListener, 500);
 }
 
 // ============= get dates range ============
