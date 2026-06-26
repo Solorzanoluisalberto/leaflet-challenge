@@ -126,8 +126,7 @@ function createFeatures(earthquakeData, Depth_select) {
                 radius: mag ? mag * 25000 : 5000
             }).bindPopup(`
                 <div class="earthquake-popup-content">
-                    <b>Magnitude:</b> ${mag}<br>
-                    <b>Depth:</b> ${depth} km<br>
+                    <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
                     <b>Location:</b> ${place}<br>
                     <b>Time:</b> ${formattedTime}
                 </div>
