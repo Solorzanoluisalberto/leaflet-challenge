@@ -1,12 +1,3 @@
-// =====================================================================================================================
-// Leaflet Earthquake Visualization
-// Created for USGS earthquake GeoJSON data.
-// This version uses Leaflet.markercluster to avoid overlapping earthquake markers.
-// When markers are close together, click the cluster circle and it will "spiderfy" the markers with lines.
-// =====================================================================================================================
-
-// ======================= Base map layers =======================
-
 var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a>   <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
     tileSize: 512,
@@ -19,7 +10,6 @@ var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{
 var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
     'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
 
-// Use the API_KEY from static/js/config.js
 var mbUrl = "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=" + API_KEY;
 
 var grayscale = L.tileLayer(mbUrl, {
@@ -51,29 +41,12 @@ var baseMaps = {
     "Night": night
 };
 
-// ======================= Overlay layers =======================
-
-// IMPORTANT:
-// layers.Earthquake is now a MarkerClusterGroup.
-// This is what creates the cluster circles and spiderfy lines.
+// Initialize all of the LayerGroups we'll be using
 var layers = {
-    Earthquake: L.markerClusterGroup({
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: false,        // Do not zoom first; spiderfy immediately
-        spiderfyOnMaxZoom: true,
-        spiderfyDistanceMultiplier: 2.5,
-        maxClusterRadius: 50,
-        removeOutsideVisibleBounds: true
-    }),
+    Earthquake: new L.LayerGroup(),
     Tectonic: new L.LayerGroup(),
     Tectonic2: new L.LayerGroup()
 };
-
-// When the user clicks a cluster, separate the markers with lines.
-// This is the "spiderfy" effect.
-layers.Earthquake.on("clusterclick", function (event) {
-    event.layer.spiderfy();
-});
 
 // Create the map with our layers
 var myMap = L.map("mapid", {
@@ -97,8 +70,7 @@ var overlaysMaps = {
 // Create a control for our layers, add our overlay layers to it
 L.control.layers(baseMaps, overlaysMaps).addTo(myMap);
 
-// ======================= Global Variables =======================
-
+// ========== Global Variables =================================
 var param = {
     color: "yellow",
     className: "TectonicPlates",
@@ -111,9 +83,8 @@ var dates = get_dates("7"); // last seven days search
 var URL_obtained = {};
 var Depth_selected = "7"; // include all earthquakeData
 
-// ======================= Tectonic plates data =======================
+// ========== Tectonic plates data ===============================
 // Relative paths work better on GitHub Pages than paths beginning with "/"
-
 var URL_json = "static/GeoJSON/plates.json";
 
 d3.json(URL_json).then(function (response1) {
@@ -127,8 +98,7 @@ d3.json(URL_json1).then(function (geoJsonLayer) {
     L.geoJson(geoJsonLayer).addTo(layers.Tectonic);
 });
 
-// ======================= Read Earthquakes data =======================
-
+// ============ read Earthquakes data ===============================================================================
 var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`;
 console.log(URL);
 
@@ -138,12 +108,6 @@ d3.json(URL).then(function (response) {
 });
 
 legend(); // initial legend
-
-// =====================================================================================================================
-// Create earthquake markers
-// Uses L.marker + L.divIcon because Leaflet.markercluster works best with marker objects.
-// The marker is designed to look like your previous earthquake circle.
-// =====================================================================================================================
 
 function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select);
@@ -160,7 +124,7 @@ function createFeatures(earthquakeData, Depth_select) {
             ? locationParts[locationParts.length - 1].trim()
             : "Not specified";
 
-        // USGS earthquake time is stored in row.properties.time
+        // USGS earthquake time is stored in row.properties.time, not geometry.coordinates[3].
         var earthquakeTime = Number(row.properties.time);
         var formattedTime = isNaN(earthquakeTime)
             ? "Time not available"
@@ -168,30 +132,15 @@ function createFeatures(earthquakeData, Depth_select) {
 
         if (depth > range.lower && depth < range.upper) {
             var color = get_color(depth);
-            var markerSize = getMarkerSize(mag);
 
-            // Custom circular marker using divIcon
-            var earthquakeIcon = L.divIcon({
-                className: "earthquake-div-icon",
-                html: `
-                    <div style="
-                        width: ${markerSize}px;
-                        height: ${markerSize}px;
-                        background: ${color};
-                        border: 2px solid black;
-                        border-radius: 50%;
-                        opacity: 0.85;
-                        box-shadow: 0 0 4px rgba(0,0,0,0.55);
-                    "></div>
-                `,
-                iconSize: [markerSize + 4, markerSize + 4],
-                iconAnchor: [(markerSize + 4) / 2, (markerSize + 4) / 2],
-                popupAnchor: [0, -markerSize / 2]
-            });
+            L.circle([lat, long], {
+                fillOpacity: 0.75,
+                color: color,
+                fillColor: color,
+                className: "Circles",
 
-            var marker = L.marker([lat, long], {
-                icon: earthquakeIcon,
-                title: place
+                // Radius in meters. Magnitude controls circle size.
+                radius: mag ? mag * 25000 : 5000
             }).bindPopup(`
                 <div class="earthquake-popup-content">
                     <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
@@ -205,23 +154,10 @@ function createFeatures(earthquakeData, Depth_select) {
                 autoPan: true,
                 keepInView: true,
                 className: "earthquake-popup"
-            });
-
-            layers.Earthquake.addLayer(marker);
+            }).addTo(layers.Earthquake);
         }
     });
 }
-
-// Marker size based on magnitude
-function getMarkerSize(mag) {
-    if (isNaN(mag) || mag <= 0) {
-        return 8;
-    }
-
-    return mag * 4 + 8;
-}
-
-// ======================= Depth filter ranges =======================
 
 function getRange(Depth_select) {
     let lower = 0;
@@ -264,8 +200,7 @@ function getRange(Depth_select) {
     };
 }
 
-// ======================= Depth color =======================
-
+// Case depth for color circle in map ===================
 function get_color(depth) {
     let color;
 
@@ -286,11 +221,8 @@ function get_color(depth) {
     return color;
 }
 
-// ======================= Legend click listener =======================
-// This listener is delayed until the legend is added to the map.
-// It is inside setTimeout because the legend HTML is created after the script first loads.
-
-setTimeout(function () {
+// On click listener legend
+function addLegendClickListener() {
     d3.selectAll(".legend1")
         .on("click", function () {
             var Select_legend = d3.select(this).attr("value");
@@ -298,14 +230,14 @@ setTimeout(function () {
             if (Select_legend != Depth_selected) {
                 Depth_selected = Select_legend;
 
-                // Remove old earthquake markers/clusters
+                // Remove old earthquake circles
                 layers.Earthquake.clearLayers();
 
                 console.log(`Clicked depth filter: ${Depth_selected}`);
                 createFeatures(URL_obtained.features, Depth_selected);
             }
         });
-}, 500);
+}
 
 function getColor(d) {
     return d > 1000 ? "#661a00" :
@@ -317,8 +249,6 @@ function getColor(d) {
            d > -10  ? "#66cc00" :
                       "#66cc00";
 }
-
-// ======================= Legend =======================
 
 function legend() {
     var legend1 = L.control({ position: "bottomleft" });
@@ -347,10 +277,12 @@ function legend() {
     };
 
     legend1.addTo(myMap);
+
+    // Add click listener after legend exists in the page.
+    setTimeout(addLegendClickListener, 500);
 }
 
-// ======================= Get dates range =======================
-
+// ============= get dates range ============
 function get_dates(days) {
     var date = new Date();
 
@@ -366,8 +298,7 @@ function get_dates(days) {
     };
 }
 
-// ======================= Date dropdown: 7 or 14 days =======================
-
+// function to filter 7 or 14 days before
 function FunctionDays(Select_days) {
     console.log(Select_days);
 
