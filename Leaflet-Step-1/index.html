@@ -11,28 +11,39 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
           integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
           crossorigin="" />
+
+    <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+
     <!-- Our CSS -->
     <link rel="stylesheet" type="text/css" href="static/css/style.css">
 </head>
 
 <body>
+
     <header class="project-header">
-     <h1>Earthquake Visualization Project</h1>
-     <p>Created by Luis Alberto Solórzano as an assignment for the Georgia Tech Data Analytics Bootcamp.</p>
+        <h1>Earthquake Visualization Project</h1>
+        <p>Created by Luis Alberto Solórzano as an assignment for the Georgia Tech Data Analytics Bootcamp.</p>
     </header>
+
     <!-- The div that holds our map -->
     <div id="mapid"></div>
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
             integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
             crossorigin=""></script>
+
+    <!-- MarkerCluster JS: must be after Leaflet JS and before logic.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+
     <!-- D3 JavaScript -->
     <script src="https://d3js.org/d3.v6.min.js"></script>
+
     <!-- API key -->
     <script type="text/javascript" src="static/js/config.js"></script>
+
     <!-- Our JavaScript -->
     <script type="text/javascript" src="static/js/logic.js"></script>
 </body>
