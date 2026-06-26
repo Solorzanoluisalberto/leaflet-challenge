@@ -10,28 +10,42 @@ var Earthquakes = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{
 var mbAttr = 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
     'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>';
 
-var mbUrl = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' + API_KEY;
+var mbUrl = "https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=" + API_KEY;
 
-var grayscale = L.tileLayer(mbUrl, { id: 'mapbox/light-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
-var satalite = L.tileLayer(mbUrl, { id: 'mapbox/satellite-v9', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
-var night = L.tileLayer(mbUrl, { id: 'mapbox/navigation-night-v1', tileSize: 512, zoomOffset: -1, attribution: mbAttr });
+var grayscale = L.tileLayer(mbUrl, {
+    id: "mapbox/light-v9",
+    tileSize: 512,
+    zoomOffset: -1,
+    attribution: mbAttr
+});
 
-// Define baseMaps Object to Hold Base Layers
+var satellite = L.tileLayer(mbUrl, {
+    id: "mapbox/satellite-v9",
+    tileSize: 512,
+    zoomOffset: -1,
+    attribution: mbAttr
+});
+
+var night = L.tileLayer(mbUrl, {
+    id: "mapbox/navigation-night-v1",
+    tileSize: 512,
+    zoomOffset: -1,
+    attribution: mbAttr
+});
+
 var baseMaps = {
     "Earthquakes": Earthquakes,
     "Gray Scale": grayscale,
-    "Satellite": satalite,
+    "Satellite": satellite,
     "Night": night
 };
 
-// Initialize all of the LayerGroups we'll be using
 var layers = {
     Earthquake: new L.LayerGroup(),
     Tectonic: new L.LayerGroup(),
     Tectonic2: new L.LayerGroup()
 };
 
-// Create the map with our layers
 var myMap = L.map("mapid", {
     center: [34.8710, -79.7554],
     zoom: 3,
@@ -50,42 +64,37 @@ var overlaysMaps = {
     "Tectonic Plates I": layers.Tectonic2
 };
 
-// Create a control for our layers, add our overlay layers to it
 L.control.layers(baseMaps, overlaysMaps).addTo(myMap);
 
 // ========== Global Variables =================================
 var param = {
-    color: 'yellow',
-    className: 'TectonicPlates',
-    fillOpacity: .1
+    color: "yellow",
+    className: "TectonicPlates",
+    fillOpacity: 0.1
 };
 
 var date_end = "";
 var date_init = "";
-var dates = get_dates("7"); // last seven days search
+var dates = get_dates("7");
 var URL_obtained = {};
-var Depth_selected = "7"; // include all earthquakeData
+var Depth_selected = "7";
 
-// ========== red tectonic plates data ===============================
-var URL_json = "/static/GeoJSON/plates.json";
+// ========== Tectonic plates data ===============================
+// Relative paths work better on GitHub Pages than paths beginning with "/"
+var URL_json = "static/GeoJSON/plates.json";
 
 d3.json(URL_json).then(function (response1) {
     L.geoJson(response1, param).addTo(layers.Tectonic2);
 });
 
-function styleFunction() {
-    return { color: "purple" };
-}
-
-//=================================================================
-var URL_json1 = "/static/GeoJSON/boundaries.json";
+var URL_json1 = "static/GeoJSON/boundaries.json";
 
 d3.json(URL_json1).then(function (geoJsonLayer) {
     console.log(geoJsonLayer);
     L.geoJson(geoJsonLayer).addTo(layers.Tectonic);
 });
 
-// ============ read Earthquakes data ===============================================================================
+// ============ Read Earthquakes data ===============================================================================
 var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`;
 console.log(URL);
 
@@ -94,19 +103,23 @@ d3.json(URL).then(function (response) {
     createFeatures(URL_obtained.features, Depth_selected);
 });
 
-legend(); // initial legend
+legend();
 
 function createFeatures(earthquakeData, Depth_select) {
     var range = getRange(Depth_select);
 
     earthquakeData.forEach((row) => {
         var mag = Number(row.properties.mag);
-        var place = row.properties.place;
+        var place = row.properties.place || "Location not available";
         var long = Number(row.geometry.coordinates[0]);
         var lat = Number(row.geometry.coordinates[1]);
         var depth = Number(row.geometry.coordinates[2]);
 
-        // IMPORTANT:
+        var locationParts = place.split(",");
+        var stateDistrict = locationParts.length > 1
+            ? locationParts[locationParts.length - 1].trim()
+            : "Not specified";
+
         // USGS earthquake time is stored in row.properties.time, not geometry.coordinates[3].
         var earthquakeTime = Number(row.properties.time);
         var formattedTime = isNaN(earthquakeTime)
@@ -115,19 +128,47 @@ function createFeatures(earthquakeData, Depth_select) {
 
         if (depth > range.lower && depth < range.upper) {
             var color = get_color(depth);
+            var markerSize = getMarkerSize(mag);
 
-            L.circle([lat, long], {
-                fillOpacity: 0.75,
-                color: color,
-                fillColor: color,
-                className: "Circles",
+            // Custom drop marker.
+            // Color = depth. Size = magnitude.
+            var earthquakeIcon = L.divIcon({
+                className: "earthquake-drop-icon",
+                html: `
+                    <div style="
+                        width: ${markerSize}px;
+                        height: ${markerSize}px;
+                        background: ${color};
+                        border: 2px solid black;
+                        border-radius: 50% 50% 50% 0;
+                        transform: rotate(-45deg);
+                        opacity: 0.9;
+                        box-shadow: 0 1px 5px rgba(0,0,0,0.55);
+                    ">
+                        <div style="
+                            width: ${Math.max(markerSize * 0.35, 5)}px;
+                            height: ${Math.max(markerSize * 0.35, 5)}px;
+                            background: rgba(255,255,255,0.85);
+                            border-radius: 50%;
+                            position: relative;
+                            top: ${markerSize * 0.28}px;
+                            left: ${markerSize * 0.28}px;
+                        "></div>
+                    </div>
+                `,
+                iconSize: [markerSize + 4, markerSize + 4],
+                iconAnchor: [(markerSize + 4) / 2, markerSize + 4],
+                popupAnchor: [0, -markerSize]
+            });
 
-                // Better radius: use magnitude, not latitude
-                radius: mag ? mag * 25000 : 5000
+            L.marker([lat, long], {
+                icon: earthquakeIcon,
+                title: place
             }).bindPopup(`
                 <div class="earthquake-popup-content">
                     <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
                     <b>Location:</b> ${place}<br>
+                    <b>State / District:</b> ${stateDistrict}<br>
                     <b>Time:</b> ${formattedTime}
                 </div>
             `, {
@@ -139,6 +180,16 @@ function createFeatures(earthquakeData, Depth_select) {
             }).addTo(layers.Earthquake);
         }
     });
+}
+
+// Marker size based on magnitude.
+// Smaller than the old circles, so markers block less of the map.
+function getMarkerSize(mag) {
+    if (isNaN(mag) || mag <= 0) {
+        return 14;
+    }
+
+    return Math.min(mag * 5 + 12, 36);
 }
 
 function getRange(Depth_select) {
@@ -182,7 +233,6 @@ function getRange(Depth_select) {
     };
 }
 
-// case depth for color circle in map ===================
 function get_color(depth) {
     let color;
 
@@ -203,38 +253,38 @@ function get_color(depth) {
     return color;
 }
 
-// on click listener legend
-d3.selectAll(".legend1")
-    .on("click", function () {
-        var Select_legend = d3.select(this).attr("value");
+function addLegendClickListener() {
+    d3.selectAll(".legend1")
+        .on("click", function () {
+            var Select_legend = d3.select(this).attr("value");
 
-        if (Select_legend != Depth_selected) {
-            Depth_selected = Select_legend;
+            if (Select_legend != Depth_selected) {
+                Depth_selected = Select_legend;
 
-            // Better way to remove old earthquake circles
-            layers.Earthquake.clearLayers();
+                layers.Earthquake.clearLayers();
 
-            console.log(`Clicked depth filter: ${Depth_selected}`);
-            createFeatures(URL_obtained.features, Depth_selected);
-        }
-    });
+                console.log(`Clicked depth filter: ${Depth_selected}`);
+                createFeatures(URL_obtained.features, Depth_selected);
+            }
+        });
+}
 
 function getColor(d) {
-    return d > 1000 ? '#661a00' :
-           d > 90   ? '#802000' :
-           d > 70   ? '#cc6600' :
-           d > 50   ? '#cc9900' :
-           d > 30   ? '#cccc00' :
-           d > 10   ? '#99cc00' :
-           d > -10  ? '#66cc00' :
-                      '#66cc00';
+    return d > 1000 ? "#661a00" :
+           d > 90   ? "#802000" :
+           d > 70   ? "#cc6600" :
+           d > 50   ? "#cc9900" :
+           d > 30   ? "#cccc00" :
+           d > 10   ? "#99cc00" :
+           d > -10  ? "#66cc00" :
+                      "#66cc00";
 }
 
 function legend() {
-    var legend1 = L.control({ position: 'bottomleft' });
+    var legend1 = L.control({ position: "bottomleft" });
 
-    legend1.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'legends');
+    legend1.onAdd = function () {
+        var div = L.DomUtil.create("div", "legends");
         var grades = [-10, 10, 30, 50, 70, 90];
 
         let dropmenu = `<select name="dates" id="dates" onchange="FunctionDays(this.value)">
@@ -248,7 +298,7 @@ function legend() {
         for (var i = 0; i < grades.length; i++) {
             div.innerHTML +=
                 '<i style="background:' + getColor(grades[i] + 1) + '" class="legend1" value="' + i + '"></i>' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+                grades[i] + (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
         }
 
         div.innerHTML += '<br><i style="background:blue" class="legend1" value="7"></i><b>All</b>';
@@ -257,13 +307,13 @@ function legend() {
     };
 
     legend1.addTo(myMap);
+
+    setTimeout(addLegendClickListener, 500);
 }
 
-// ============= get dates range ============
 function get_dates(days) {
     var date = new Date();
 
-    // USGS accepts YYYY-MM-DD better than YYYY/MM/DD
     date_end = date.toISOString().split("T")[0];
 
     date.setDate(date.getDate() - Number(days));
@@ -275,7 +325,6 @@ function get_dates(days) {
     };
 }
 
-// function to filter 7 or 14 days before
 function FunctionDays(Select_days) {
     console.log(Select_days);
 
@@ -289,7 +338,6 @@ function FunctionDays(Select_days) {
 
         layers.Earthquake.clearLayers();
 
-        // Keep current depth selected when changing date range
         createFeatures(response.features, Depth_selected);
     });
 }
