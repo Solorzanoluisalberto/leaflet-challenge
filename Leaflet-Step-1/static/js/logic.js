@@ -114,12 +114,7 @@ function createFeatures(earthquakeData, Depth_select) {
         var long = Number(row.geometry.coordinates[0]);
         var lat = Number(row.geometry.coordinates[1]);
         var depth = Number(row.geometry.coordinates[2]);
-
         var locationParts = place.split(",");
-        var stateDistrict = locationParts.length > 1
-            ? locationParts[locationParts.length - 1].trim()
-            : "Not specified";
-
         // USGS earthquake time is stored in row.properties.time, not geometry.coordinates[3].
         var earthquakeTime = Number(row.properties.time);
         var formattedTime = isNaN(earthquakeTime)
@@ -168,7 +163,6 @@ function createFeatures(earthquakeData, Depth_select) {
                 <div class="earthquake-popup-content">
                     <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
                     <b>Location:</b> ${place}<br>
-                    <b>State / District:</b> ${stateDistrict}<br>
                     <b>Time:</b> ${formattedTime}
                 </div>
             `, {
