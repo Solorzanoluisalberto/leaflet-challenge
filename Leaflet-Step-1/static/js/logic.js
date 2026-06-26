@@ -120,9 +120,6 @@ function createFeatures(earthquakeData, Depth_select) {
         var depth = Number(row.geometry.coordinates[2]);
 
         var locationParts = place.split(",");
-        var stateDistrict = locationParts.length > 1
-            ? locationParts[locationParts.length - 1].trim()
-            : "Not specified";
 
         // USGS earthquake time is stored in row.properties.time, not geometry.coordinates[3].
         var earthquakeTime = Number(row.properties.time);
