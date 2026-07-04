@@ -252,3 +252,47 @@ body {
         width: 112px;
     }
 }
+/* =========================================================
+   Date selector stability fix
+   Purpose:
+   Keep the date selector visible and clickable while panning the map.
+   Paste this at the BOTTOM of static/css/style.css
+   ========================================================= */
+
+/* Keep Leaflet controls above map panes and markers */
+.leaflet-control-container {
+    z-index: 1200;
+    position: relative;
+}
+
+/* Keep the bottom-left control area visible */
+.leaflet-bottom.leaflet-left {
+    z-index: 1300;
+}
+
+/* Keep date selector above map layers */
+.date-control {
+    position: relative;
+    z-index: 1400;
+    pointer-events: auto;
+}
+
+/* Make sure inputs remain clickable */
+.date-control input,
+.date-control label,
+.date-control span,
+#earthquake-status,
+.date-note {
+    pointer-events: auto;
+}
+
+/* Mobile: move the date selector slightly above the bottom edge */
+@media (max-width: 600px) {
+    .leaflet-bottom.leaflet-left {
+        bottom: 8px;
+    }
+
+    .date-control {
+        max-width: 175px;
+    }
+}
