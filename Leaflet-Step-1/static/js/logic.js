@@ -171,6 +171,15 @@ function addDateRangeControl() {
 
         L.DomEvent.disableClickPropagation(div);
         L.DomEvent.disableScrollPropagation(div);
+        // Prevent the map from dragging when the user touches or clicks the date selector.
+        L.DomEvent.on(div, "mousedown", L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, "mouseup", L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, "click", L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, "dblclick", L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, "touchstart", L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, "touchmove", L.DomEvent.stopPropagation);
+        L.DomEvent.on(div, "wheel", L.DomEvent.stopPropagation);
+
 
         return div;
     };
