@@ -73,11 +73,8 @@ var param = {
     fillOpacity: 0.1
 };
 
-var date_end = "";
-var date_init = "";
-var dates = get_dates("7");
 var URL_obtained = {};
-var Depth_selected = "7";
+var selectedDate = formatDateLocal(new Date());
 
 // ========== Tectonic plates data ===============================
 // Relative paths work better on GitHub Pages than paths beginning with "/"
@@ -85,94 +82,189 @@ var URL_json = "static/GeoJSON/plates.json";
 
 d3.json(URL_json).then(function (response1) {
     L.geoJson(response1, param).addTo(layers.Tectonic2);
+}).catch(function (error) {
+    console.warn("Tectonic plates file was not loaded:", error);
 });
 
 var URL_json1 = "static/GeoJSON/boundaries.json";
 
 d3.json(URL_json1).then(function (geoJsonLayer) {
-    console.log(geoJsonLayer);
     L.geoJson(geoJsonLayer).addTo(layers.Tectonic);
+}).catch(function (error) {
+    console.warn("Tectonic boundaries file was not loaded:", error);
 });
 
-// ============ Read Earthquakes data ===============================================================================
-var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`;
-console.log(URL);
+// Add date picker control and load today's earthquake events by default
+addDatePickerControl();
+loadEarthquakesForDate(selectedDate);
 
-d3.json(URL).then(function (response) {
-    URL_obtained = response;
-    createFeatures(URL_obtained.features, Depth_selected);
-});
+// =====================================================================================================================
+// Date functions
+// =====================================================================================================================
 
-legend();
+function formatDateLocal(date) {
+    var year = date.getFullYear();
+    var month = String(date.getMonth() + 1).padStart(2, "0");
+    var day = String(date.getDate()).padStart(2, "0");
 
-function createFeatures(earthquakeData, Depth_select) {
-    var range = getRange(Depth_select);
+    return `${year}-${month}-${day}`;
+}
 
+function getNextDate(dateString) {
+    var parts = dateString.split("-");
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    date.setDate(date.getDate() + 1);
+
+    return formatDateLocal(date);
+}
+
+function buildUSGSUrl(dateString) {
+    var startDate = dateString;
+    var endDate = getNextDate(dateString);
+
+    return `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startDate}&endtime=${endDate}&orderby=time`;
+}
+
+// =====================================================================================================================
+// Date picker control
+// =====================================================================================================================
+
+function addDatePickerControl() {
+    var dateControl = L.control({ position: "bottomleft" });
+
+    dateControl.onAdd = function () {
+        var div = L.DomUtil.create("div", "date-control");
+
+        div.innerHTML = `
+            <label for="earthquake-date"><b>Earthquake date</b></label><br>
+            <input type="date" id="earthquake-date" value="${selectedDate}" max="${selectedDate}">
+            <div id="earthquake-status">Loading...</div>
+        `;
+
+        L.DomEvent.disableClickPropagation(div);
+        L.DomEvent.disableScrollPropagation(div);
+
+        return div;
+    };
+
+    dateControl.addTo(myMap);
+
+    setTimeout(function () {
+        var input = document.getElementById("earthquake-date");
+
+        if (input) {
+            input.addEventListener("change", function () {
+                selectedDate = this.value;
+                loadEarthquakesForDate(selectedDate);
+            });
+        }
+    }, 300);
+}
+
+function updateStatus(message) {
+    var status = document.getElementById("earthquake-status");
+
+    if (status) {
+        status.innerHTML = message;
+    }
+}
+
+// =====================================================================================================================
+// Load earthquake data for selected day
+// =====================================================================================================================
+
+function loadEarthquakesForDate(dateString) {
+    layers.Earthquake.clearLayers();
+
+    updateStatus("Loading...");
+
+    var URL = buildUSGSUrl(dateString);
+    console.log(URL);
+
+    d3.json(URL).then(function (response) {
+        URL_obtained = response;
+
+        createFeatures(response.features);
+
+        if (response.features.length === 1) {
+            updateStatus("1 event");
+        } else {
+            updateStatus(`${response.features.length} events`);
+        }
+    }).catch(function (error) {
+        console.error("USGS data was not loaded:", error);
+        updateStatus("Data not loaded");
+    });
+}
+
+// =====================================================================================================================
+// Create earthquake markers
+// =====================================================================================================================
+
+function createFeatures(earthquakeData) {
     earthquakeData.forEach((row) => {
         var mag = Number(row.properties.mag);
         var place = row.properties.place || "Location not available";
         var long = Number(row.geometry.coordinates[0]);
         var lat = Number(row.geometry.coordinates[1]);
         var depth = Number(row.geometry.coordinates[2]);
-        var locationParts = place.split(",");
+
         // USGS earthquake time is stored in row.properties.time, not geometry.coordinates[3].
         var earthquakeTime = Number(row.properties.time);
         var formattedTime = isNaN(earthquakeTime)
             ? "Time not available"
             : new Date(earthquakeTime).toLocaleString();
 
-        if (depth > range.lower && depth < range.upper) {
-            var color = get_color(depth);
-            var markerSize = getMarkerSize(mag);
+        var color = get_color(depth);
+        var markerSize = getMarkerSize(mag);
 
-            // Custom drop marker.
-            // Color = depth. Size = magnitude.
-            var earthquakeIcon = L.divIcon({
-                className: "earthquake-drop-icon",
-                html: `
+        // Custom drop marker.
+        // Color = depth. Size = magnitude.
+        var earthquakeIcon = L.divIcon({
+            className: "earthquake-drop-icon",
+            html: `
+                <div style="
+                    width: ${markerSize}px;
+                    height: ${markerSize}px;
+                    background: ${color};
+                    border: 2px solid black;
+                    border-radius: 50% 50% 50% 0;
+                    transform: rotate(-45deg);
+                    opacity: 0.9;
+                    box-shadow: 0 1px 5px rgba(0,0,0,0.55);
+                ">
                     <div style="
-                        width: ${markerSize}px;
-                        height: ${markerSize}px;
-                        background: ${color};
-                        border: 2px solid black;
-                        border-radius: 50% 50% 50% 0;
-                        transform: rotate(-45deg);
-                        opacity: 0.9;
-                        box-shadow: 0 1px 5px rgba(0,0,0,0.55);
-                    ">
-                        <div style="
-                            width: ${Math.max(markerSize * 0.35, 5)}px;
-                            height: ${Math.max(markerSize * 0.35, 5)}px;
-                            background: rgba(255,255,255,0.85);
-                            border-radius: 50%;
-                            position: relative;
-                            top: ${markerSize * 0.28}px;
-                            left: ${markerSize * 0.28}px;
-                        "></div>
-                    </div>
-                `,
-                iconSize: [markerSize + 4, markerSize + 4],
-                iconAnchor: [(markerSize + 4) / 2, markerSize + 4],
-                popupAnchor: [0, -markerSize]
-            });
-
-            L.marker([lat, long], {
-                icon: earthquakeIcon,
-                title: place
-            }).bindPopup(`
-                <div class="earthquake-popup-content">
-                    <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
-                    <b>Location:</b> ${place}<br>
-                    <b>Time:</b> ${formattedTime}
+                        width: ${Math.max(markerSize * 0.35, 5)}px;
+                        height: ${Math.max(markerSize * 0.35, 5)}px;
+                        background: rgba(255,255,255,0.85);
+                        border-radius: 50%;
+                        position: relative;
+                        top: ${markerSize * 0.28}px;
+                        left: ${markerSize * 0.28}px;
+                    "></div>
                 </div>
-            `, {
-                maxWidth: 240,
-                minWidth: 160,
-                autoPan: true,
-                keepInView: true,
-                className: "earthquake-popup"
-            }).addTo(layers.Earthquake);
-        }
+            `,
+            iconSize: [markerSize + 4, markerSize + 4],
+            iconAnchor: [(markerSize + 4) / 2, markerSize + 4],
+            popupAnchor: [0, -markerSize]
+        });
+
+        L.marker([lat, long], {
+            icon: earthquakeIcon,
+            title: place
+        }).bindPopup(`
+            <div class="earthquake-popup-content">
+                <b>Magnitude:</b> ${mag} | <b>Depth:</b> ${depth} km<br>
+                <b>Location:</b> ${place}<br>
+                <b>Time:</b> ${formattedTime}
+            </div>
+        `, {
+            maxWidth: 220,
+            minWidth: 150,
+            autoPan: true,
+            keepInView: true,
+            className: "earthquake-popup"
+        }).addTo(layers.Earthquake);
     });
 }
 
@@ -180,53 +272,14 @@ function createFeatures(earthquakeData, Depth_select) {
 // Smaller than the old circles, so markers block less of the map.
 function getMarkerSize(mag) {
     if (isNaN(mag) || mag <= 0) {
-        return 14;
+        return 12;
     }
 
-    return Math.min(mag * 5 + 12, 36);
+    return Math.min(mag * 4 + 10, 32);
 }
 
-function getRange(Depth_select) {
-    let lower = 0;
-    let upper = 0;
-
-    switch (Depth_select) {
-        case "0":
-            lower = -100;
-            upper = 10;
-            break;
-        case "1":
-            lower = 10.1;
-            upper = 30;
-            break;
-        case "2":
-            lower = 30.1;
-            upper = 50;
-            break;
-        case "3":
-            lower = 50.1;
-            upper = 70;
-            break;
-        case "4":
-            lower = 70.1;
-            upper = 90;
-            break;
-        case "5":
-            lower = 90.1;
-            upper = 500;
-            break;
-        default:
-            lower = -200;
-            upper = 500;
-            break;
-    }
-
-    return {
-        lower,
-        upper
-    };
-}
-
+// Depth color.
+// The exact depth is still shown in the popup.
 function get_color(depth) {
     let color;
 
@@ -245,95 +298,6 @@ function get_color(depth) {
     }
 
     return color;
-}
-
-function addLegendClickListener() {
-    d3.selectAll(".legend1")
-        .on("click", function () {
-            var Select_legend = d3.select(this).attr("value");
-
-            if (Select_legend != Depth_selected) {
-                Depth_selected = Select_legend;
-
-                layers.Earthquake.clearLayers();
-
-                console.log(`Clicked depth filter: ${Depth_selected}`);
-                createFeatures(URL_obtained.features, Depth_selected);
-            }
-        });
-}
-
-function getColor(d) {
-    return d > 1000 ? "#661a00" :
-           d > 90   ? "#802000" :
-           d > 70   ? "#cc6600" :
-           d > 50   ? "#cc9900" :
-           d > 30   ? "#cccc00" :
-           d > 10   ? "#99cc00" :
-           d > -10  ? "#66cc00" :
-                      "#66cc00";
-}
-
-function legend() {
-    var legend1 = L.control({ position: "bottomleft" });
-
-    legend1.onAdd = function () {
-        var div = L.DomUtil.create("div", "legends");
-        var grades = [-10, 10, 30, 50, 70, 90];
-
-        let dropmenu = `<select name="dates" id="dates" onchange="FunctionDays(this.value)">
-            <option value="7">Last 7 days</option>
-            <option value="14">Last 14 days</option>
-        </select>`;
-
-        div.innerHTML += '<i style="background:white" align="center"><b>' + dropmenu + '</b></i><br>';
-        div.innerHTML += '<i style="background:white" align="center"><b>Depth</b></i><br>';
-
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 1) + '" class="legend1" value="' + i + '"></i>' +
-                grades[i] + (grades[i + 1] ? "&ndash;" + grades[i + 1] + "<br>" : "+");
-        }
-
-        div.innerHTML += '<br><i style="background:blue" class="legend1" value="7"></i><b>All</b>';
-
-        return div;
-    };
-
-    legend1.addTo(myMap);
-
-    setTimeout(addLegendClickListener, 500);
-}
-
-function get_dates(days) {
-    var date = new Date();
-
-    date_end = date.toISOString().split("T")[0];
-
-    date.setDate(date.getDate() - Number(days));
-    date_init = date.toISOString().split("T")[0];
-
-    return {
-        date_init,
-        date_end
-    };
-}
-
-function FunctionDays(Select_days) {
-    console.log(Select_days);
-
-    dates = get_dates(Select_days);
-
-    var URL = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${dates.date_init}&endtime=${dates.date_end}`;
-    console.log(URL);
-
-    d3.json(URL).then(function (response) {
-        URL_obtained = response;
-
-        layers.Earthquake.clearLayers();
-
-        createFeatures(response.features, Depth_selected);
-    });
 }
 
 console.log(new Date());
