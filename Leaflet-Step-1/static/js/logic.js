@@ -74,7 +74,10 @@ var param = {
 };
 
 var URL_obtained = {};
-var selectedDate = formatDateLocal(new Date());
+var todayDate = formatDateLocal(new Date());
+var selectedStartDate = todayDate;
+var selectedEndDate = todayDate;
+var MAX_RANGE_DAYS = 5;
 
 // ========== Tectonic plates data ===============================
 // Relative paths work better on GitHub Pages than paths beginning with "/"
@@ -94,9 +97,9 @@ d3.json(URL_json1).then(function (geoJsonLayer) {
     console.warn("Tectonic boundaries file was not loaded:", error);
 });
 
-// Add date picker control and load today's earthquake events by default
-addDatePickerControl();
-loadEarthquakesForDate(selectedDate);
+// Add date range control and load today's earthquake events by default
+addDateRangeControl();
+loadEarthquakesForRange(selectedStartDate, selectedEndDate);
 
 // =====================================================================================================================
 // Date functions
@@ -110,35 +113,60 @@ function formatDateLocal(date) {
     return `${year}-${month}-${day}`;
 }
 
-function getNextDate(dateString) {
+function parseLocalDate(dateString) {
     var parts = dateString.split("-");
-    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    date.setDate(date.getDate() + 1);
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+function addDays(dateString, days) {
+    var date = parseLocalDate(dateString);
+    date.setDate(date.getDate() + days);
 
     return formatDateLocal(date);
 }
 
-function buildUSGSUrl(dateString) {
-    var startDate = dateString;
-    var endDate = getNextDate(dateString);
+function getInclusiveDayCount(startDateString, endDateString) {
+    var start = parseLocalDate(startDateString);
+    var end = parseLocalDate(endDateString);
+    var millisecondsPerDay = 24 * 60 * 60 * 1000;
 
-    return `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startDate}&endtime=${endDate}&orderby=time`;
+    return Math.round((end - start) / millisecondsPerDay) + 1;
+}
+
+function isDateAfter(firstDateString, secondDateString) {
+    return parseLocalDate(firstDateString) > parseLocalDate(secondDateString);
+}
+
+function buildUSGSUrl(startDateString, endDateString) {
+    // USGS endtime is exclusive.
+    // If user selects 2026-07-01 to 2026-07-05, we request endtime=2026-07-06.
+    var usgsEndDate = addDays(endDateString, 1);
+
+    return `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startDateString}&endtime=${usgsEndDate}&orderby=time`;
 }
 
 // =====================================================================================================================
-// Date picker control
+// Date range control
 // =====================================================================================================================
 
-function addDatePickerControl() {
+function addDateRangeControl() {
     var dateControl = L.control({ position: "bottomleft" });
 
     dateControl.onAdd = function () {
         var div = L.DomUtil.create("div", "date-control");
 
         div.innerHTML = `
-            <label for="earthquake-date"><b>Earthquake date</b></label><br>
-            <input type="date" id="earthquake-date" value="${selectedDate}" max="${selectedDate}">
+            <label><b>Earthquake dates</b></label><br>
+            <div class="date-row">
+                <span>From</span>
+                <input type="date" id="earthquake-start-date" value="${selectedStartDate}" max="${todayDate}">
+            </div>
+            <div class="date-row">
+                <span>To</span>
+                <input type="date" id="earthquake-end-date" value="${selectedEndDate}" max="${todayDate}">
+            </div>
             <div id="earthquake-status">Loading...</div>
+            <div class="date-note">Maximum range: 5 days</div>
         `;
 
         L.DomEvent.disableClickPropagation(div);
@@ -150,15 +178,58 @@ function addDatePickerControl() {
     dateControl.addTo(myMap);
 
     setTimeout(function () {
-        var input = document.getElementById("earthquake-date");
+        var startInput = document.getElementById("earthquake-start-date");
+        var endInput = document.getElementById("earthquake-end-date");
 
-        if (input) {
-            input.addEventListener("change", function () {
-                selectedDate = this.value;
-                loadEarthquakesForDate(selectedDate);
-            });
+        if (startInput && endInput) {
+            startInput.addEventListener("change", handleDateRangeChange);
+            endInput.addEventListener("change", handleDateRangeChange);
         }
     }, 300);
+}
+
+function handleDateRangeChange() {
+    var startInput = document.getElementById("earthquake-start-date");
+    var endInput = document.getElementById("earthquake-end-date");
+
+    var startDate = startInput.value;
+    var endDate = endInput.value;
+
+    // No future dates
+    if (isDateAfter(startDate, todayDate)) {
+        startDate = todayDate;
+    }
+
+    if (isDateAfter(endDate, todayDate)) {
+        endDate = todayDate;
+    }
+
+    // End date cannot be before start date
+    if (isDateAfter(startDate, endDate)) {
+        endDate = startDate;
+    }
+
+    // Limit range to maximum 5 days, inclusive
+    var rangeDays = getInclusiveDayCount(startDate, endDate);
+
+    if (rangeDays > MAX_RANGE_DAYS) {
+        endDate = addDays(startDate, MAX_RANGE_DAYS - 1);
+
+        if (isDateAfter(endDate, todayDate)) {
+            endDate = todayDate;
+            startDate = addDays(endDate, -(MAX_RANGE_DAYS - 1));
+        }
+
+        updateStatus("Range adjusted to 5 days maximum.");
+    }
+
+    selectedStartDate = startDate;
+    selectedEndDate = endDate;
+
+    startInput.value = selectedStartDate;
+    endInput.value = selectedEndDate;
+
+    loadEarthquakesForRange(selectedStartDate, selectedEndDate);
 }
 
 function updateStatus(message) {
@@ -170,15 +241,16 @@ function updateStatus(message) {
 }
 
 // =====================================================================================================================
-// Load earthquake data for selected day
+// Load earthquake data for selected date range
 // =====================================================================================================================
 
-function loadEarthquakesForDate(dateString) {
+function loadEarthquakesForRange(startDateString, endDateString) {
     layers.Earthquake.clearLayers();
 
-    updateStatus("Loading...");
+    var dayCount = getInclusiveDayCount(startDateString, endDateString);
+    updateStatus(`Loading ${dayCount} day${dayCount === 1 ? "" : "s"}...`);
 
-    var URL = buildUSGSUrl(dateString);
+    var URL = buildUSGSUrl(startDateString, endDateString);
     console.log(URL);
 
     d3.json(URL).then(function (response) {
@@ -186,11 +258,10 @@ function loadEarthquakesForDate(dateString) {
 
         createFeatures(response.features);
 
-        if (response.features.length === 1) {
-            updateStatus("1 event");
-        } else {
-            updateStatus(`${response.features.length} events`);
-        }
+        var eventText = response.features.length === 1 ? "1 event" : `${response.features.length} events`;
+        var dayText = dayCount === 1 ? startDateString : `${startDateString} to ${endDateString}`;
+
+        updateStatus(`${eventText}<br>${dayText}`);
     }).catch(function (error) {
         console.error("USGS data was not loaded:", error);
         updateStatus("Data not loaded");
@@ -279,7 +350,7 @@ function getMarkerSize(mag) {
 }
 
 // Depth color.
-// The exact depth is still shown in the popup.
+// The popup shows exact depth, so a legend is optional.
 function get_color(depth) {
     let color;
 
