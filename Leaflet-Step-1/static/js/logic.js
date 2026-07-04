@@ -241,7 +241,7 @@ function updateStatus(message) {
 }
 
 // =====================================================================================================================
-// Load earthquake data for selected dates range
+// Load earthquake data for selected date range
 // =====================================================================================================================
 
 function loadEarthquakesForRange(startDateString, endDateString) {
