@@ -7,8 +7,10 @@
    - Small framed date-range selector
    - Mobile-friendly controls and popups
    ========================================================= */
+/* =========================================================
+   Leaflet Earthquake Visualization - Full Page Style
+   ========================================================= */
 
-/* ---------- Page reset ---------- */
 html,
 body {
     height: 100%;
@@ -23,7 +25,6 @@ body {
     box-sizing: border-box;
 }
 
-/* ---------- Full-screen map ---------- */
 #mapid {
     height: 100vh;
     width: 100vw;
@@ -72,7 +73,19 @@ body {
 }
 
 /* ---------- Date range selector frame ---------- */
+.leaflet-control-container {
+    z-index: 1200;
+    position: relative;
+}
+
+.leaflet-bottom.leaflet-left {
+    z-index: 1300;
+}
+
 .date-control {
+    position: relative;
+    z-index: 1400;
+    pointer-events: auto;
     background: rgba(255, 255, 255, 0.94);
     padding: 9px 10px;
     border-radius: 9px;
@@ -105,6 +118,7 @@ body {
 }
 
 .date-control input[type="date"] {
+    pointer-events: auto;
     width: 126px;
     padding: 3px 4px;
     border: 1px solid #a7b0bb;
@@ -150,24 +164,14 @@ body {
     max-width: 220px;
 }
 
-/* ---------- Drop marker ---------- */
 .earthquake-drop-icon {
     background: transparent;
     border: none;
 }
 
-/* ---------- Optional old legend classes kept harmless ---------- */
 .legend,
 .legends {
     display: none;
-}
-
-.legend1 {
-    width: 18px;
-    height: 18px;
-    float: left;
-    margin-right: 8px;
-    opacity: 0.7;
 }
 
 /* ---------- Mobile layout ---------- */
@@ -195,8 +199,13 @@ body {
         max-width: 155px;
     }
 
+    .leaflet-bottom.leaflet-left {
+        bottom: 8px;
+    }
+
     .date-control {
         min-width: 165px;
+        max-width: 175px;
         padding: 7px 8px;
         font-size: 11px;
         border-radius: 8px;
@@ -238,7 +247,6 @@ body {
     }
 }
 
-/* ---------- Very small phones ---------- */
 @media (max-width: 390px) {
     .project-header h1 {
         font-size: 12px;
@@ -250,49 +258,5 @@ body {
 
     .date-control input[type="date"] {
         width: 112px;
-    }
-}
-/* =========================================================
-   Date selector stability fix
-   Purpose:
-   Keep the date selector visible and clickable while panning the map.
-   Paste this at the BOTTOM of static/css/style.css
-   ========================================================= */
-
-/* Keep Leaflet controls above map panes and markers */
-.leaflet-control-container {
-    z-index: 1200;
-    position: relative;
-}
-
-/* Keep the bottom-left control area visible */
-.leaflet-bottom.leaflet-left {
-    z-index: 1300;
-}
-
-/* Keep date selector above map layers */
-.date-control {
-    position: relative;
-    z-index: 1400;
-    pointer-events: auto;
-}
-
-/* Make sure inputs remain clickable */
-.date-control input,
-.date-control label,
-.date-control span,
-#earthquake-status,
-.date-note {
-    pointer-events: auto;
-}
-
-/* Mobile: move the date selector slightly above the bottom edge */
-@media (max-width: 600px) {
-    .leaflet-bottom.leaflet-left {
-        bottom: 8px;
-    }
-
-    .date-control {
-        max-width: 175px;
     }
 }
