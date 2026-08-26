@@ -260,3 +260,28 @@ body {
         width: 112px;
     }
 }
+/* Fixed date selector overlay */
+.fixed-date-control {
+    position: fixed !important;
+    left: 12px !important;
+    bottom: 22px !important;
+    z-index: 99999 !important;
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.fixed-date-control input,
+.fixed-date-control label,
+.fixed-date-control span,
+.fixed-date-control div {
+    pointer-events: auto !important;
+}
+
+@media (max-width: 600px) {
+    .fixed-date-control {
+        left: 10px !important;
+        bottom: 16px !important;
+        max-width: 175px !important;
+    }
+}
