@@ -150,53 +150,62 @@ function buildUSGSUrl(startDateString, endDateString) {
 // =====================================================================================================================
 
 function addDateRangeControl() {
-    var dateControl = L.control({ position: "bottomleft" });
+    // The date selector is now written directly in index.html.
+    // This function prepares the values and connects the change events.
 
-    dateControl.onAdd = function () {
-        var div = L.DomUtil.create("div", "date-control");
+    var control = document.getElementById("date-control-container");
+    var startInput = document.getElementById("earthquake-start-date");
+    var endInput = document.getElementById("earthquake-end-date");
 
-        div.innerHTML = `
-            <label><b>Earthquake dates</b></label><br>
+    // Fallback: if index.html does not have the selector yet, create it here.
+    if (!control) {
+        control = document.createElement("div");
+        control.id = "date-control-container";
+        control.className = "date-control fixed-date-control";
+
+        control.innerHTML = `
+            <label><b>Earthquake dates</b></label>
             <div class="date-row">
                 <span>From</span>
-                <input type="date" id="earthquake-start-date" value="${selectedStartDate}" max="${todayDate}">
+                <input type="date" id="earthquake-start-date">
             </div>
             <div class="date-row">
                 <span>To</span>
-                <input type="date" id="earthquake-end-date" value="${selectedEndDate}" max="${todayDate}">
+                <input type="date" id="earthquake-end-date">
             </div>
             <div id="earthquake-status">Loading...</div>
             <div class="date-note">Maximum range: 5 days</div>
         `;
 
-        L.DomEvent.disableClickPropagation(div);
-        L.DomEvent.disableScrollPropagation(div);
-        // Prevent the map from dragging when the user touches or clicks the date selector.
-        L.DomEvent.on(div, "mousedown", L.DomEvent.stopPropagation);
-        L.DomEvent.on(div, "mouseup", L.DomEvent.stopPropagation);
-        L.DomEvent.on(div, "click", L.DomEvent.stopPropagation);
-        L.DomEvent.on(div, "dblclick", L.DomEvent.stopPropagation);
-        L.DomEvent.on(div, "touchstart", L.DomEvent.stopPropagation);
-        L.DomEvent.on(div, "touchmove", L.DomEvent.stopPropagation);
-        L.DomEvent.on(div, "wheel", L.DomEvent.stopPropagation);
+        document.body.appendChild(control);
 
+        startInput = document.getElementById("earthquake-start-date");
+        endInput = document.getElementById("earthquake-end-date");
+    }
 
-        return div;
-    };
+    if (control && typeof L !== "undefined" && L.DomEvent) {
+        L.DomEvent.disableClickPropagation(control);
+        L.DomEvent.disableScrollPropagation(control);
+        L.DomEvent.on(control, "mousedown", L.DomEvent.stopPropagation);
+        L.DomEvent.on(control, "mouseup", L.DomEvent.stopPropagation);
+        L.DomEvent.on(control, "click", L.DomEvent.stopPropagation);
+        L.DomEvent.on(control, "dblclick", L.DomEvent.stopPropagation);
+        L.DomEvent.on(control, "touchstart", L.DomEvent.stopPropagation);
+        L.DomEvent.on(control, "touchmove", L.DomEvent.stopPropagation);
+        L.DomEvent.on(control, "wheel", L.DomEvent.stopPropagation);
+    }
 
-    dateControl.addTo(myMap);
+    if (startInput && endInput) {
+        startInput.value = selectedStartDate;
+        endInput.value = selectedEndDate;
 
-    setTimeout(function () {
-        var startInput = document.getElementById("earthquake-start-date");
-        var endInput = document.getElementById("earthquake-end-date");
+        startInput.max = todayDate;
+        endInput.max = todayDate;
 
-        if (startInput && endInput) {
-            startInput.addEventListener("change", handleDateRangeChange);
-            endInput.addEventListener("change", handleDateRangeChange);
-        }
-    }, 300);
+        startInput.addEventListener("change", handleDateRangeChange);
+        endInput.addEventListener("change", handleDateRangeChange);
+    }
 }
-
 function handleDateRangeChange() {
     var startInput = document.getElementById("earthquake-start-date");
     var endInput = document.getElementById("earthquake-end-date");
