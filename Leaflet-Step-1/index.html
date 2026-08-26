@@ -10,13 +10,16 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
           integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
           crossorigin="" />
+    
 
     <!-- Our CSS -->
-    <link rel="stylesheet" type="text/css" href="static/css/style.css?v=10">
+    <link rel="stylesheet" type="text/css" href="static/css/style.css?v=50">
+    <script type="text/javascript" src="static/js/config.js?v=50"></script>
+    <script type="text/javascript" src="static/js/logic.js?v=50"></script>
 </head>
 
 <body>
-
+    
     <header class="project-header">
         <h1>Earthquake Visualization Project</h1>
         <p>Created by Luis Alberto Solórzano as an assignment for the Georgia Tech Data Analytics Bootcamp.</p>
@@ -24,7 +27,20 @@
 
     <!-- The div that holds our map -->
     <div id="mapid"></div>
-
+<!-- Fixed date selector -->
+<div id="date-control-container" class="date-control fixed-date-control">
+    <label><b>Earthquake dates</b></label>
+    <div class="date-row">
+        <span>From</span>
+        <input type="date" id="earthquake-start-date">
+    </div>
+    <div class="date-row">
+        <span>To</span>
+        <input type="date" id="earthquake-end-date">
+    </div>
+    <div id="earthquake-status">Loading...</div>
+    <div class="date-note">Maximum range: 5 days</div>
+</div>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
             integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
